@@ -40,6 +40,9 @@ export function Navigation() {
             <Link href="/blockchain" className="text-muted-foreground hover:text-foreground transition-colors">
               Blockchain
             </Link>
+            <Link href="/help" className="text-muted-foreground hover:text-foreground transition-colors">
+              Help
+            </Link>
           </div>
 
           {/* Right side */}
@@ -99,6 +102,9 @@ export function Navigation() {
                 className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
               >
                 Blockchain
+              </Link>
+              <Link href="/help" className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1">
+                Help
               </Link>
             </div>
           </div>
