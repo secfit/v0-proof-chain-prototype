@@ -10,40 +10,6 @@ ProofChain solves the trust problem in smart contract auditing by:
 - **Transparency**: All audit results are cryptographically verified on-chain
 - **Anonymity**: Complete separation between developers and auditors throughout the process
 
-## 🏗️ Architecture
-
-### System Components
-
-\`\`\`
-┌─────────────────────────────────────────────────────────────┐
-│                        ProofChain                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                               │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │   Developer  │    │   Auditor    │    │   Investor   │  │
-│  │   Portal     │    │   Portal     │    │   Portal     │  │
-│  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘  │
-│         │                   │                    │           │
-│         └───────────────────┼────────────────────┘           │
-│                             │                                │
-│  ┌──────────────────────────┴─────────────────────────────┐ │
-│  │              Core Platform Layer                        │ │
-│  │  • AI Sanitization Engine                              │ │
-│  │  • ZKP Proof Generator                                 │ │
-│  │  • Smart Contract Escrow                               │ │
-│  │  • Reputation System                                   │ │
-│  └──────────────────────────┬─────────────────────────────┘ │
-│                             │                                │
-│  ┌──────────────────────────┴─────────────────────────────┐ │
-│  │           ApeChain Blockchain Layer                     │ │
-│  │  • On-chain Verification                               │ │
-│  │  • Commitment Hash Storage                             │ │
-│  │  • Payment Settlement                                  │ │
-│  └────────────────────────────────────────────────────────┘ │
-│                                                               │
-└─────────────────────────────────────────────────────────────┘
-\`\`\`
-
 ### Data Flow
 
 1. **Upload Phase**
@@ -63,42 +29,6 @@ ProofChain solves the trust problem in smart contract auditing by:
    - On-chain verification via ApeChain
    - Results published anonymously
    - Payments released from escrow
-
-## 📁 Project Structure
-
-\`\`\`
-proofchain-prototype/
-├── app/                          # Next.js App Router pages
-│   ├── audits/                   # Auditor job marketplace
-│   ├── auditor/                  # Auditor workspace
-│   │   └── job/[id]/            # Individual audit job interface
-│   ├── blockchain/               # Blockchain explorer & wallet
-│   ├── dashboard/                # Developer dashboard
-│   ├── help/                     # Interactive help & documentation
-│   ├── marketplace/              # Auditor discovery & matching
-│   ├── upload/                   # Contract upload wizard
-│   ├── verification/             # ZKP verification interface
-│   ├── layout.tsx               # Root layout with navigation
-│   ├── page.tsx                 # Homepage
-│   └── globals.css              # Global styles & design tokens
-│
-├── components/                   # React components
-│   ├── ui/                      # shadcn/ui components
-│   │   ├── button.tsx
-│   │   ├── card.tsx
-│   │   ├── tabs.tsx
-│   │   └── ...
-│   └── navigation.tsx           # Main navigation component
-│
-├── lib/                         # Utility functions
-│   ├── blockchain.ts            # Blockchain interaction utilities
-│   └── utils.ts                 # General utilities (cn, etc.)
-│
-├── public/                      # Static assets
-│   └── *.jpg                    # Images for marketplace
-│
-└── README.md                    # This file
-\`\`\`
 
 ## 🔑 Key Features by Section
 
@@ -164,32 +94,6 @@ npm run dev
 http://localhost:3000
 \`\`\`
 
-### Production Deployment
-
-#### Deploy to Vercel (Recommended)
-
-1. **Push to GitHub**
-\`\`\`bash
-git add .
-git commit -m "Initial commit"
-git push origin main
-\`\`\`
-
-2. **Deploy via Vercel**
-- Click "Publish" button in v0 interface, or
-- Visit [vercel.com](https://vercel.com)
-- Import your GitHub repository
-- Deploy automatically
-
-#### Environment Variables (Optional)
-
-For blockchain integration, add these to your Vercel project:
-
-\`\`\`env
-NEXT_PUBLIC_APECHAIN_RPC_URL=https://apechain-rpc-url
-NEXT_PUBLIC_PROOFCHAIN_CONTRACT_ADDRESS=0x...
-\`\`\`
-
 ## 🛠️ Technology Stack
 
 - **Framework**: Next.js 15 (App Router)
@@ -199,15 +103,6 @@ NEXT_PUBLIC_PROOFCHAIN_CONTRACT_ADDRESS=0x...
 - **Cryptography**: Zero-Knowledge Proofs (ZKP)
 - **AI**: Contract sanitization & price negotiation
 - **Language**: TypeScript
-
-## 🔐 Security Features
-
-1. **AI Sanitization**: Removes sensitive information from contracts
-2. **Zero-Knowledge Proofs**: Verify audits without revealing details
-3. **On-chain Anchoring**: Immutable commitment hashes
-4. **Complete Anonymity**: No direct contact between parties
-5. **Escrow System**: Secure payment handling
-6. **Reputation Staking**: Economic incentives for honest audits
 
 ## 📊 Vulnerability Categories
 
@@ -257,9 +152,6 @@ Visit `/help` in the application for an interactive guide covering:
 - System intersection diagrams
 - Best practices for developers and auditors
 
-## 📝 License
-
-MIT License - See LICENSE file for details
 
 ## 🆘 Support
 
@@ -270,4 +162,4 @@ For issues or questions:
 
 ---
 
-Built with ❤️ for secure, private, and verifiable smart contract auditing
+
