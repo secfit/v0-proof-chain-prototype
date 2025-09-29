@@ -3,7 +3,7 @@
 ProofChain is a decentralized marketplace for smart contract security audits that uses Zero-Knowledge Proofs (ZKP) to maintain complete anonymity between developers, auditors, and investors while ensuring cryptographic verification of all audit results on ApeChain.
 
 ## 🎯 Core Concept
-
+ 
 ProofChain solves the trust problem in smart contract auditing by:
 - **Privacy**: Developers submit contracts anonymously with AI-powered sanitization
 - **Verification**: Auditors generate ZK proofs for their findings without revealing private details
