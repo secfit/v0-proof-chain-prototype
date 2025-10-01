@@ -1,4 +1,4 @@
-# ProofChain - Privacy-First Smart Contract Auditing Platform
+# ProofChain - Privacy-First Smart Contract Auditing Platform.
 
 ProofChain is a decentralized marketplace for smart contract security audits that uses Zero-Knowledge Proofs (ZKP) to maintain complete anonymity between developers, auditors, and investors while ensuring cryptographic verification of all audit results on ApeChain.
 
