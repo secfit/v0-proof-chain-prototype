@@ -1,0 +1,110 @@
+-- ProofChain Airtable Database Schema Setup
+-- This script documents the required Airtable tables and fields
+-- Note: Airtable tables must be created manually through the Airtable UI
+-- This script serves as documentation for the required schema
+
+-- Table: Developers
+-- Fields:
+--   - name (Single line text)
+--   - walletAddress (Single line text, Primary)
+--   - githubRepoLink (URL)
+--   - email (Email)
+--   - totalAuditsRequested (Number)
+--   - totalSpent (Currency)
+--   - createdAt (Date)
+
+-- Table: Auditors
+-- Fields:
+--   - name (Single line text)
+--   - walletAddress (Single line text, Primary)
+--   - expertise (Multiple select: Solidity, Rust, Move, Security, DeFi, NFT, DAO, etc.)
+--   - rating (Number, 0-5)
+--   - totalAuditsCompleted (Number)
+--   - totalEarned (Currency)
+--   - createdAt (Date)
+
+-- Table: AuditRequests
+-- Fields:
+--   - projectName (Single line text)
+--   - projectDescription (Long text)
+--   - githubUrl (URL)
+--   - repoHash (Single line text)
+--   - complexity (Single select: Quick, Standard, Deep)
+--   - estimatedDuration (Number, days)
+--   - proposedPrice (Currency)
+--   - auditorCount (Number)
+--   - developerWallet (Single line text)
+--   - developerId (Link to Developers table)
+--   - status (Single select: Available, In Progress, Completed, Cancelled)
+--   - requestNftId (Single line text)
+--   - requestNftAddress (Single line text)
+--   - tags (Multiple select)
+--   - ipfsCodeHash (Single line text)
+--   - createdAt (Date)
+--   - updatedAt (Last modified time)
+
+-- Table: Audit Owners
+-- Fields:
+--   - auditRequestId (Link to AuditRequests table)
+--   - auditorWallet (Single line text)
+--   - auditorId (Link to Auditors table)
+--   - auditorName (Single line text)
+--   - acceptedPrice (Currency)
+--   - startDate (Date)
+--   - estimatedCompletionDate (Date)
+--   - ownerNftId (Single line text)
+--   - ownerNftAddress (Single line text)
+--   - status (Single select: Accepted, In Progress, Completed)
+--   - createdAt (Date)
+
+-- Table: AuditResults
+-- Fields:
+--   - auditRequestId (Link to AuditRequests table)
+--   - auditOwnerId (Link to Audit Owners table)
+--   - ipfsHash (Single line text)
+--   - evidenceFileHashes (Long text, JSON array)
+--   - findingsCount (Number)
+--   - vulnerabilitiesCount (Number)
+--   - severityBreakdown (Long text, JSON: {critical, high, medium, low})
+--   - completionDate (Date)
+--   - resultNftId (Single line text)
+--   - resultNftAddress (Single line text)
+--   - status (Single select: Submitted, Verified, Disputed)
+--   - reportFileUrl (URL)
+--   - createdAt (Date)
+
+-- Table: Findings
+-- Fields:
+--   - auditRequestId (Link to AuditRequests table)
+--   - title (Single line text)
+--   - description (Long text)
+--   - severity (Single select: Critical, High, Medium, Low, Informational)
+--   - contractFile (Single line text)
+--   - lineNumber (Number)
+--   - ipfsHash (Single line text)
+--   - createdAt (Date)
+
+-- Table: Transactions
+-- Fields:
+--   - txId (Single line text, Primary)
+--   - requestId (Link to AuditRequests table)
+--   - developerId (Link to Developers table)
+--   - auditorId (Link to Auditors table)
+--   - amount (Currency)
+--   - tokenType (Single select: FT, NFT)
+--   - txHash (Single line text)
+--   - status (Single select: Pending, Completed, Failed)
+--   - createdAt (Date)
+
+-- SETUP INSTRUCTIONS:
+-- 1. Create a new Airtable base called "ProofChain"
+-- 2. Create each table listed above with the specified fields
+-- 3. Set up the field types exactly as documented
+-- 4. Configure the Links between tables (foreign keys)
+-- 5. Copy the Base ID from Airtable (found in API documentation)
+-- 6. Set the 'air_table' environment variable to your Base ID
+-- 7. Generate an Airtable API key from your account settings
+-- 8. The same 'air_table' variable should contain your API key
+--    Format: "key<your_api_key>" or just the base ID depending on your setup
+
+-- Note: This is a documentation file. Airtable tables must be created manually.

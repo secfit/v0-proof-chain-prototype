@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Search,
   Filter,
@@ -19,9 +21,9 @@ import {
   FileText,
   Users,
   DollarSign,
-  MessageSquare,
   Timer,
   Bot,
+  Loader2,
 } from "lucide-react"
 
 const mockAudits = [
@@ -150,6 +152,14 @@ export default function AuditsPage() {
   const [statusFilter, setStatusFilter] = useState("All")
   const [complexityFilter, setComplexityFilter] = useState("All")
 
+  const [isAcceptDialogOpen, setIsAcceptDialogOpen] = useState(false)
+  const [selectedAudit, setSelectedAudit] = useState<any>(null)
+  const [auditorName, setAuditorName] = useState("")
+  const [auditorWallet, setAuditorWallet] = useState("")
+  const [estimatedDays, setEstimatedDays] = useState("")
+  const [isAccepting, setIsAccepting] = useState(false)
+  const [nftConfirmation, setNftConfirmation] = useState<any>(null)
+
   const statusOptions = ["All", "available", "pending-acceptance", "in-progress", "completed"]
   const complexityOptions = ["All", "Critical", "High", "Medium", "Low"]
 
@@ -169,6 +179,54 @@ export default function AuditsPage() {
   const availableAudits = mockAudits.filter((a) => a.status === "available").length
   const inProgressAudits = mockAudits.filter((a) => a.status === "in-progress").length
   const completedAudits = mockAudits.filter((a) => a.status === "completed").length
+
+  const handleAcceptAudit = (audit: any) => {
+    setSelectedAudit(audit)
+    setIsAcceptDialogOpen(true)
+    setNftConfirmation(null)
+  }
+
+  const handleSubmitAccept = async () => {
+    if (!auditorName || !auditorWallet || !estimatedDays) {
+      alert("Please fill in all fields")
+      return
+    }
+
+    setIsAccepting(true)
+
+    try {
+      const response = await fetch("/api/accept-audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          auditRequestId: selectedAudit.id,
+          auditorWallet,
+          auditorName,
+          acceptedPrice: selectedAudit.negotiatedPrice || selectedAudit.proposedPrice,
+          estimatedCompletionDays: Number.parseInt(estimatedDays),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to accept audit")
+      }
+
+      console.log("[v0] Audit accepted successfully:", data)
+      setNftConfirmation(data.nft)
+
+      // Redirect to auditor job page after a delay
+      setTimeout(() => {
+        window.location.href = `/auditor/job/${selectedAudit.id}`
+      }, 2000)
+    } catch (error: any) {
+      console.error("[v0] Error accepting audit:", error)
+      alert(error.message || "Failed to accept audit")
+    } finally {
+      setIsAccepting(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -394,16 +452,14 @@ export default function AuditsPage() {
                   <div className="flex flex-col space-y-2 lg:items-end">
                     <div className="flex space-x-2">
                       {audit.status === "available" && (
-                        <>
-                          <Button size="sm">Accept ${audit.proposedPrice}</Button>
-                          <Button variant="outline" size="sm">
-                            <MessageSquare className="w-4 h-4 mr-1" />
-                            Negotiate
-                          </Button>
-                        </>
+                        <Button size="sm" onClick={() => handleAcceptAudit(audit)}>
+                          Accept ${audit.proposedPrice}
+                        </Button>
                       )}
                       {audit.status === "pending-acceptance" && (
-                        <Button size="sm">Accept ${audit.negotiatedPrice}</Button>
+                        <Button size="sm" onClick={() => handleAcceptAudit(audit)}>
+                          Accept ${audit.negotiatedPrice}
+                        </Button>
                       )}
                       {audit.status === "in-progress" && (
                         <Button asChild>
@@ -440,6 +496,146 @@ export default function AuditsPage() {
           </Card>
         )}
       </div>
+
+      <Dialog open={isAcceptDialogOpen} onOpenChange={setIsAcceptDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Accept Audit & Mint Ownership NFT</DialogTitle>
+            <DialogDescription>
+              Provide your details to accept this audit. An Audit Owner NFT will be minted on ApeChain.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!nftConfirmation ? (
+            <div className="space-y-4">
+              {selectedAudit && (
+                <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                  <h4 className="font-semibold">Audit Details</h4>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Contract:</span> {selectedAudit.contractType}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Complexity:</span> {selectedAudit.complexity}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Price:</span> $
+                      {selectedAudit.negotiatedPrice || selectedAudit.proposedPrice}
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Lines of Code:</span>{" "}
+                      {selectedAudit.linesOfCode.toLocaleString()}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="auditorName">Your Name</Label>
+                <Input
+                  id="auditorName"
+                  placeholder="e.g., John Doe"
+                  value={auditorName}
+                  onChange={(e) => setAuditorName(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="auditorWallet">Your Wallet Address</Label>
+                <Input
+                  id="auditorWallet"
+                  placeholder="0x..."
+                  value={auditorWallet}
+                  onChange={(e) => setAuditorWallet(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This wallet will receive the Audit Owner NFT and payments
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="estimatedDays">Estimated Completion (days)</Label>
+                <Input
+                  id="estimatedDays"
+                  type="number"
+                  min="1"
+                  placeholder="e.g., 7"
+                  value={estimatedDays}
+                  onChange={(e) => setEstimatedDays(e.target.value)}
+                />
+              </div>
+
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Audit Owner NFT
+                </h4>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Upon acceptance, you'll receive an ERC-721 Audit Owner NFT containing:
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                  <li>• Reference to Audit Request NFT #{selectedAudit?.id}</li>
+                  <li>• Your auditor details and wallet address</li>
+                  <li>• Accepted price and timeline</li>
+                  <li>• Start date and estimated completion</li>
+                  <li>• Immutable ownership proof on ApeChain</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsAcceptDialogOpen(false)} disabled={isAccepting}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmitAccept} disabled={isAccepting}>
+                  {isAccepting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Minting NFT...
+                    </>
+                  ) : (
+                    "Accept & Mint NFT"
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-success/10 border border-success/30 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-success font-semibold mb-3">
+                  <CheckCircle className="w-5 h-5" />
+                  Audit Owner NFT Minted Successfully!
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Token ID:</span>{" "}
+                    <span className="font-mono font-semibold">#{nftConfirmation.tokenId}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Transaction:</span>{" "}
+                    <a
+                      href={nftConfirmation.explorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      View on Explorer
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">
+                  <CheckCircle className="w-4 h-4 inline mr-1 text-success" />
+                  Your Audit Owner NFT has been linked to Audit Request NFT #{selectedAudit?.id}. Redirecting to audit
+                  workspace...
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

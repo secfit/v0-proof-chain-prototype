@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
@@ -11,9 +13,9 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Download,
-  Upload,
   FileCode,
   Shield,
   AlertTriangle,
@@ -25,6 +27,8 @@ import {
   Send,
   Timer,
   Bot,
+  Loader2,
+  ExternalLink,
 } from "lucide-react"
 
 // Mock job data - completely anonymized
@@ -108,12 +112,83 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
     category: "other",
   })
 
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [ipfsHash, setIpfsHash] = useState("")
+  const [nftConfirmation, setNftConfirmation] = useState<any>(null)
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
+
   const completedChecks = auditChecks.filter((check) => check.status === "completed").length
   const totalChecks = auditChecks.length
   const progressPercentage = (completedChecks / totalChecks) * 100
 
   const handleVulnerabilityChange = (id: string, checked: boolean) => {
     setSelectedVulnerabilities((prev) => prev.map((vuln) => (vuln.id === id ? { ...vuln, checked } : vuln)))
+  }
+
+  const handleEvidenceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setEvidenceFiles(Array.from(e.target.files))
+    }
+  }
+
+  const handleSubmitResults = async () => {
+    setIsSubmitting(true)
+    setUploadProgress(0)
+
+    try {
+      // Simulate progress for evidence preparation
+      setUploadProgress(10)
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      // Upload to IPFS
+      setUploadProgress(30)
+      await new Promise((resolve) => setTimeout(resolve, 500))
+
+      // Submit audit results with NFT minting
+      setUploadProgress(50)
+      const response = await fetch("/api/submit-audit-results", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          auditOwnerId: params.id,
+          findings,
+          vulnerabilities: selectedVulnerabilities,
+          auditNotes,
+          staticAnalysisReports: ["slither", "mythril"],
+          evidenceFiles: evidenceFiles.map((f) => f.name),
+          contractHash: jobData.contractHash,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit audit results")
+      }
+
+      console.log("[v0] Audit results submitted successfully:", data)
+
+      // Set IPFS hash and NFT confirmation
+      setUploadProgress(80)
+      setIpfsHash(data.ipfsHash)
+      setNftConfirmation(data.nft)
+
+      // Complete progress
+      setUploadProgress(100)
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      // Redirect to dashboard after delay
+      setTimeout(() => {
+        window.location.href = "/dashboard"
+      }, 3000)
+    } catch (error: any) {
+      console.error("[v0] Error submitting audit results:", error)
+      alert(error.message || "Failed to submit audit results")
+      setIsSubmitting(false)
+      setUploadProgress(0)
+    }
   }
 
   return (
@@ -637,24 +712,19 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="font-semibold">ZKP Preparation</h3>
+                      <h3 className="font-semibold">Additional Evidence Files</h3>
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Witness generation</span>
-                          <Badge variant="outline">Pending</Badge>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Circuit validation</span>
-                          <Badge variant="outline">Pending</Badge>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span>Proof generation</span>
-                          <Badge variant="outline">Pending</Badge>
-                        </div>
-                        <div className="flex items-center justify-between text-sm">
-                          <span>On-chain verification</span>
-                          <Badge variant="outline">Pending</Badge>
-                        </div>
+                        <Label htmlFor="evidence-files">Upload Evidence Files</Label>
+                        <Input
+                          id="evidence-files"
+                          type="file"
+                          multiple
+                          onChange={handleEvidenceFileChange}
+                          className="cursor-pointer"
+                        />
+                        {evidenceFiles.length > 0 && (
+                          <div className="text-sm text-muted-foreground">{evidenceFiles.length} file(s) selected</div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -678,15 +748,7 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                   </div>
 
                   <div className="flex space-x-2">
-                    <Button>
-                      <Upload className="w-4 h-4 mr-1" />
-                      Upload Evidence
-                    </Button>
-                    <Button variant="outline">
-                      <Shield className="w-4 h-4 mr-1" />
-                      Generate ZK Proof
-                    </Button>
-                    <Button variant="outline">
+                    <Button onClick={() => setIsSubmitDialogOpen(true)}>
                       <Send className="w-4 h-4 mr-1" />
                       Submit Audit Results
                     </Button>
@@ -700,7 +762,7 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                         <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                           Your audit results will be submitted anonymously. The smart contract owner will never know
                           your identity, and you will never know theirs. All evidence is cryptographically verified
-                          through zero-knowledge proofs.
+                          through zero-knowledge proofs and stored on IPFS.
                         </p>
                       </div>
                     </div>
@@ -711,6 +773,136 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Submit Audit Results & Mint Result NFT</DialogTitle>
+            <DialogDescription>
+              Your evidence will be uploaded to IPFS and an Audit Result NFT will be minted on ApeChain.
+            </DialogDescription>
+          </DialogHeader>
+
+          {!nftConfirmation ? (
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                <h4 className="font-semibold">Submission Summary</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Contract Hash:</span>
+                    <div className="font-mono text-xs">{jobData.contractHash.slice(0, 20)}...</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Findings:</span>
+                    <div>{findings.length}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Vulnerabilities:</span>
+                    <div>{selectedVulnerabilities.filter((v) => v.checked).length}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Evidence Files:</span>
+                    <div>{evidenceFiles.length}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                  <Shield className="w-5 h-5" />
+                  Audit Result NFT
+                </h4>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Upon submission, an ERC-721 Audit Result NFT will be minted containing:
+                </p>
+                <ul className="text-sm text-muted-foreground space-y-1 ml-4">
+                  <li>• Reference to Audit Owner NFT #{params.id}</li>
+                  <li>• IPFS hash of all evidence and findings</li>
+                  <li>• Vulnerability count and findings summary</li>
+                  <li>• Completion timestamp</li>
+                  <li>• Immutable proof on ApeChain blockchain</li>
+                </ul>
+              </div>
+
+              {isSubmitting && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>Processing submission...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <Progress value={uploadProgress} />
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {uploadProgress < 20 && "Preparing evidence package..."}
+                    {uploadProgress >= 20 && uploadProgress < 40 && "Uploading to IPFS..."}
+                    {uploadProgress >= 40 && uploadProgress < 60 && "Minting Audit Result NFT..."}
+                    {uploadProgress >= 60 && uploadProgress < 80 && "Anchoring on ApeChain..."}
+                    {uploadProgress >= 80 && "Finalizing submission..."}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setIsSubmitDialogOpen(false)} disabled={isSubmitting}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmitResults} disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4 mr-2" />
+                      Submit & Mint NFT
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-success/10 border border-success/30 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-success font-semibold mb-3">
+                  <CheckCircle className="w-5 h-5" />
+                  Audit Result NFT Minted Successfully!
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Token ID:</span>{" "}
+                    <span className="font-mono font-semibold">#{nftConfirmation.tokenId}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">IPFS Hash:</span>{" "}
+                    <span className="font-mono text-xs">{ipfsHash}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Transaction:</span>{" "}
+                    <a
+                      href={nftConfirmation.explorerUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline inline-flex items-center gap-1"
+                    >
+                      View on Explorer
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">
+                  <CheckCircle className="w-4 h-4 inline mr-1 text-success" />
+                  Your audit results have been uploaded to IPFS and the Result NFT has been linked to Audit Owner NFT #
+                  {params.id}. Redirecting to dashboard...
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

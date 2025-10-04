@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -21,6 +21,7 @@ import {
   Download,
   Zap,
 } from "lucide-react"
+import { useSearchParams } from "next/navigation"
 
 // Mock verification data
 const mockVerifications = [
@@ -83,6 +84,24 @@ export default function VerificationPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedVerification, setSelectedVerification] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("search")
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const hash = searchParams.get("hash")
+    if (hash) {
+      setSearchQuery(hash)
+      setActiveTab("search")
+      // Auto-select first matching verification
+      const match = mockVerifications.find(
+        (v) =>
+          v.commitmentHash.toLowerCase().includes(hash.toLowerCase()) ||
+          v.proofHash.toLowerCase().includes(hash.toLowerCase()),
+      )
+      if (match) {
+        setSelectedVerification(match.id)
+      }
+    }
+  }, [searchParams])
 
   const filteredVerifications = mockVerifications.filter(
     (v) =>
@@ -93,6 +112,17 @@ export default function VerificationPage() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
+  }
+
+  const handleVerifyProof = () => {
+    setActiveTab("search")
+    // Scroll to the search input
+    setTimeout(() => {
+      const searchInput = document.querySelector('input[placeholder*="commitment hash"]') as HTMLInputElement
+      if (searchInput) {
+        searchInput.focus()
+      }
+    }, 100)
   }
 
   const getStatusColor = (status: string) => {
@@ -129,9 +159,13 @@ export default function VerificationPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">ZKP Verification Portal</h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-6">
             Verify audit proofs and explore cryptographic evidence on ApeChain blockchain
           </p>
+          <Button size="lg" onClick={handleVerifyProof} className="bg-primary hover:bg-primary/90">
+            <Shield className="w-5 h-5 mr-2" />
+            Verify Proof
+          </Button>
         </div>
 
         {/* Stats Cards */}

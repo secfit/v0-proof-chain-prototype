@@ -1,13 +1,36 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Shield, Settings, Bell, ChevronDown, Menu, X } from "lucide-react"
+import { Shield, Settings, Bell, ChevronDown, Menu, X, Moon, Sun } from "lucide-react"
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(false)
+
+  useEffect(() => {
+    // Check for saved theme preference or default to light mode
+    const savedTheme = localStorage.getItem("theme")
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+
+    if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+      setIsDarkMode(true)
+      document.documentElement.classList.add("dark")
+    }
+  }, [])
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode)
+    if (!isDarkMode) {
+      document.documentElement.classList.add("dark")
+      localStorage.setItem("theme", "dark")
+    } else {
+      document.documentElement.classList.remove("dark")
+      localStorage.setItem("theme", "light")
+    }
+  }
 
   return (
     <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
@@ -40,6 +63,9 @@ export function Navigation() {
             <Link href="/blockchain" className="text-muted-foreground hover:text-foreground transition-colors">
               Blockchain
             </Link>
+            <Link href="/admin" className="text-muted-foreground hover:text-foreground transition-colors">
+              Admin
+            </Link>
             <Link href="/help" className="text-muted-foreground hover:text-foreground transition-colors">
               Help
             </Link>
@@ -47,6 +73,9 @@ export function Navigation() {
 
           {/* Right side */}
           <div className="hidden md:flex items-center space-x-4">
+            <Button variant="ghost" size="sm" onClick={toggleDarkMode} title={isDarkMode ? "Light mode" : "Dark mode"}>
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
             <Button variant="ghost" size="sm">
               <Bell className="w-4 h-4" />
             </Button>
@@ -65,7 +94,10 @@ export function Navigation() {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-2">
+            <Button variant="ghost" size="sm" onClick={toggleDarkMode}>
+              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
             <Button variant="ghost" size="sm" onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
@@ -102,6 +134,9 @@ export function Navigation() {
                 className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
               >
                 Blockchain
+              </Link>
+              <Link href="/admin" className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1">
+                Admin
               </Link>
               <Link href="/help" className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1">
                 Help

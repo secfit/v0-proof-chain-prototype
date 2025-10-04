@@ -5,6 +5,7 @@ import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
 import {
   Shield,
   Upload,
@@ -23,6 +24,8 @@ import {
   Lightbulb,
   Target,
   Workflow,
+  Database,
+  Hexagon,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -75,7 +78,7 @@ export default function HelpPage() {
                 </CardTitle>
                 <CardDescription className="text-lg">
                   The world's first privacy-preserving smart contract auditing marketplace powered by Zero-Knowledge
-                  Proofs
+                  Proofs, NFTs, and IPFS
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -101,14 +104,22 @@ export default function HelpPage() {
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>Cryptographic Proof:</strong> ZKP verification ensures audit integrity without
-                          revealing details
+                          <strong>NFT Audit Trail:</strong> Three linked NFTs (Request, Owner, Result) create immutable
+                          proof of audit lifecycle
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>Blockchain Anchoring:</strong> Immutable audit records on ApeChain
+                          <strong>IPFS Evidence Storage:</strong> Decentralized storage ensures audit evidence is
+                          permanent and tamper-proof
+                        </span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span>
+                          <strong>Blockchain Anchoring:</strong> Immutable audit records on ApeChain with cryptographic
+                          verification
                         </span>
                       </li>
                     </ul>
@@ -122,30 +133,151 @@ export default function HelpPage() {
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>For Developers:</strong> Secure audits without exposing proprietary code
+                          <strong>For Developers:</strong> Secure audits without exposing proprietary code, with NFT
+                          proof of audit request
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>For Auditors:</strong> Access to quality projects with fair compensation
+                          <strong>For Auditors:</strong> Access to quality projects with fair compensation and NFT
+                          ownership certificates
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>For Investors:</strong> Verifiable audit quality through cryptographic proofs
+                          <strong>For Investors:</strong> Verifiable audit quality through cryptographic proofs and
+                          on-chain NFT verification
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>For Ecosystem:</strong> Higher security standards across all smart contracts
+                          <strong>For Ecosystem:</strong> Higher security standards with permanent, decentralized audit
+                          records
                         </span>
                       </li>
                     </ul>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-accent/10 to-success/10 border-accent/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-2xl">
+                  <Hexagon className="w-8 h-8 text-accent" />
+                  NFT & IPFS Technology Stack
+                </CardTitle>
+                <CardDescription className="text-lg">
+                  Three-tier NFT system with decentralized evidence storage
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-3 gap-6">
+                  <Card className="bg-primary/5 border-primary/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Upload className="w-5 h-5 text-primary" />
+                        Audit Request NFT
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      <p className="text-muted-foreground">
+                        <strong>Minted when:</strong> Developer submits contract for audit
+                      </p>
+                      <p className="text-muted-foreground">
+                        <strong>Contains:</strong> Project metadata, complexity, proposed price, GitHub hash, tags
+                      </p>
+                      <p className="text-muted-foreground">
+                        <strong>Status:</strong> Available - Acts as digital job posting
+                      </p>
+                      <Badge variant="outline" className="mt-2">
+                        ERC-721 on ApeChain
+                      </Badge>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-accent/5 border-accent/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Shield className="w-5 h-5 text-accent" />
+                        Audit Owner NFT
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      <p className="text-muted-foreground">
+                        <strong>Minted when:</strong> Auditor accepts audit job
+                      </p>
+                      <p className="text-muted-foreground">
+                        <strong>Contains:</strong> Auditor details, accepted price, timeline, reference to Request NFT
+                      </p>
+                      <p className="text-muted-foreground">
+                        <strong>Status:</strong> Accepted - Proves audit ownership
+                      </p>
+                      <Badge variant="outline" className="mt-2">
+                        ERC-721 on ApeChain
+                      </Badge>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-success/5 border-success/20">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <FileCheck className="w-5 h-5 text-success" />
+                        Audit Result NFT
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                      <p className="text-muted-foreground">
+                        <strong>Minted when:</strong> Auditor submits findings
+                      </p>
+                      <p className="text-muted-foreground">
+                        <strong>Contains:</strong> IPFS hash, findings count, vulnerabilities, reference to Owner NFT
+                      </p>
+                      <p className="text-muted-foreground">
+                        <strong>Status:</strong> Completed - Immutable audit proof
+                      </p>
+                      <Badge variant="outline" className="mt-2">
+                        ERC-721 on ApeChain
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="bg-muted/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <Database className="w-5 h-5" />
+                      IPFS Evidence Storage
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-semibold mb-2">Stored on IPFS:</h4>
+                        <ul className="space-y-1 text-muted-foreground">
+                          <li>• Complete audit findings and recommendations</li>
+                          <li>• Vulnerability assessment details</li>
+                          <li>• Static analysis reports (Slither, Mythril)</li>
+                          <li>• Auditor notes and evidence files</li>
+                          <li>• Cryptographic signatures and timestamps</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold mb-2">Benefits:</h4>
+                        <ul className="space-y-1 text-muted-foreground">
+                          <li>• Permanent, tamper-proof storage</li>
+                          <li>• Decentralized - no single point of failure</li>
+                          <li>• Content-addressed - verifiable integrity</li>
+                          <li>• Linked to Result NFT via IPFS hash</li>
+                          <li>• Accessible for verification anytime</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </CardContent>
             </Card>
 
@@ -202,7 +334,9 @@ export default function HelpPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">Complete ProofChain Workflow</CardTitle>
-                <CardDescription>Step-by-step process from contract upload to verified audit badge</CardDescription>
+                <CardDescription>
+                  Step-by-step process from contract upload to verified audit badge with NFT trail
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-8">
@@ -223,6 +357,9 @@ export default function HelpPage() {
                             <p className="text-xs text-muted-foreground">
                               Submit smart contract with AI sanitization options
                             </p>
+                            <Badge variant="outline" className="mt-2 text-xs">
+                              Request NFT Minted
+                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -236,6 +373,9 @@ export default function HelpPage() {
                             <p className="text-xs text-muted-foreground">
                               Choose audit depth and number of auditors ($50-$110)
                             </p>
+                            <Badge variant="outline" className="mt-2 text-xs">
+                              Saved to Airtable
+                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -247,6 +387,9 @@ export default function HelpPage() {
                             </div>
                             <h4 className="font-semibold mb-1">Track Progress</h4>
                             <p className="text-xs text-muted-foreground">Monitor audit status through dashboard</p>
+                            <Badge variant="outline" className="mt-2 text-xs">
+                              Owner NFT Created
+                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -258,6 +401,9 @@ export default function HelpPage() {
                             </div>
                             <h4 className="font-semibold mb-1">Receive Badge</h4>
                             <p className="text-xs text-muted-foreground">Get verified audit badge with ZKP</p>
+                            <Badge variant="outline" className="mt-2 text-xs">
+                              Result NFT + IPFS
+                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -281,6 +427,9 @@ export default function HelpPage() {
                             <p className="text-xs text-muted-foreground">
                               View anonymized contracts available for audit
                             </p>
+                            <Badge variant="outline" className="mt-2 text-xs">
+                              View Request NFTs
+                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -290,10 +439,11 @@ export default function HelpPage() {
                             <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center mx-auto mb-2">
                               <span className="text-accent-foreground font-bold text-sm">2</span>
                             </div>
-                            <h4 className="font-semibold mb-1">Negotiate & Accept</h4>
-                            <p className="text-xs text-muted-foreground">
-                              AI-powered price negotiation and job acceptance
-                            </p>
+                            <h4 className="font-semibold mb-1">Accept Job</h4>
+                            <p className="text-xs text-muted-foreground">Accept audit and receive ownership NFT</p>
+                            <Badge variant="outline" className="mt-2 text-xs">
+                              Owner NFT Minted
+                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -307,6 +457,9 @@ export default function HelpPage() {
                             <p className="text-xs text-muted-foreground">
                               Review sanitized code for 13 vulnerability types
                             </p>
+                            <Badge variant="outline" className="mt-2 text-xs">
+                              Evidence Collected
+                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -317,7 +470,10 @@ export default function HelpPage() {
                               <span className="text-success-foreground font-bold text-sm">4</span>
                             </div>
                             <h4 className="font-semibold mb-1">Submit Proof</h4>
-                            <p className="text-xs text-muted-foreground">Generate ZKP evidence and submit findings</p>
+                            <p className="text-xs text-muted-foreground">Upload to IPFS and mint Result NFT</p>
+                            <Badge variant="outline" className="mt-2 text-xs">
+                              Result NFT Minted
+                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -348,11 +504,11 @@ export default function HelpPage() {
                         <CardContent className="p-4">
                           <div className="text-center">
                             <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center mx-auto mb-2">
-                              <Lock className="w-4 h-4 text-accent-foreground" />
+                              <Database className="w-4 h-4 text-accent-foreground" />
                             </div>
-                            <h4 className="font-semibold mb-1">ZKP Generation</h4>
+                            <h4 className="font-semibold mb-1">IPFS Storage</h4>
                             <p className="text-xs text-muted-foreground">
-                              Cryptographic proof creation and verification
+                              Decentralized evidence and audit data storage
                             </p>
                           </div>
                         </CardContent>
@@ -364,7 +520,9 @@ export default function HelpPage() {
                               <Network className="w-4 h-4 text-success-foreground" />
                             </div>
                             <h4 className="font-semibold mb-1">Blockchain Anchoring</h4>
-                            <p className="text-xs text-muted-foreground">Immutable record storage on ApeChain</p>
+                            <p className="text-xs text-muted-foreground">
+                              NFT minting and immutable record on ApeChain
+                            </p>
                           </div>
                         </CardContent>
                       </Card>
