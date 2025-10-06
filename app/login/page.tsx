@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,6 +15,7 @@ import { client } from "@/lib/client"
 export default function LoginPage() {
   const router = useRouter()
   const { login } = useAuth()
+  const [mounted, setMounted] = useState(false)
   const account = useActiveAccount()
 
   // Email auth state
@@ -24,6 +25,10 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
   const [demoCode, setDemoCode] = useState("")
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSendCode = async () => {
     setIsLoading(true)
@@ -203,15 +208,21 @@ export default function LoginPage() {
                   <p className="text-sm text-muted-foreground">
                     Connect your wallet to sign in securely with your blockchain address.
                   </p>
-                  <div className="flex flex-col items-center space-y-4">
-                    <ConnectButton client={client} />
-                    {account?.address && (
-                      <Button onClick={handleWalletLogin} className="w-full">
-                        Continue with Wallet
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    )}
-                  </div>
+                  {mounted ? (
+                    <div className="flex flex-col items-center space-y-4">
+                      <ConnectButton client={client} />
+                      {account?.address && (
+                        <Button onClick={handleWalletLogin} className="w-full">
+                          Continue with Wallet
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>

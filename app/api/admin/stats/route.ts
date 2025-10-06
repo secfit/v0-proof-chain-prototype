@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { listAuditRequests } from "@/lib/airtable-service"
 
+export const dynamic = "force-dynamic"
+
 export async function GET() {
   try {
     console.log("[v0] Admin stats API called")

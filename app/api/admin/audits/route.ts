@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { listAuditRequests, getAuditResult, listFindings } from "@/lib/airtable-service"
 
+export const dynamic = "force-dynamic"
+
 export async function GET() {
   try {
     // Fetch all audit requests
