@@ -1,9 +1,8 @@
 // ThirdWeb IPFS storage service for ProofChain
 // Replaces Pinata with ThirdWeb's built-in IPFS functionality
 
-import { ThirdwebStorage } from "@thirdweb-dev/storage"
-
-const THIRDWEB_CLIENT_ID = process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || ""
+import { upload, download } from "thirdweb/storage"
+import { client } from "./client"
 
 export interface IPFSUploadResult {
   ipfsHash: string
@@ -35,9 +34,7 @@ export interface EvidenceData {
 
 // Initialize ThirdWeb Storage
 function getStorage() {
-  return new ThirdwebStorage({
-    clientId: THIRDWEB_CLIENT_ID,
-  })
+  return { client }
 }
 
 // Upload JSON data to IPFS via ThirdWeb
@@ -45,14 +42,12 @@ export async function uploadJSONToIPFS(data: any, name: string): Promise<IPFSUpl
   try {
     console.log("[v0] Uploading to ThirdWeb IPFS:", name)
 
-    if (!THIRDWEB_CLIENT_ID) {
-      throw new Error("ThirdWeb client ID is not configured")
-    }
-
-    const storage = getStorage()
-    const uri = await storage.upload(data)
+    const uri = await upload({
+      client,
+      files: [new File([JSON.stringify(data)], name, { type: "application/json" })],
+    })
     const ipfsHash = uri.replace("ipfs://", "")
-    const gatewayUrl = storage.resolveScheme(uri)
+    const gatewayUrl = `https://ipfs.io/ipfs/${ipfsHash}`
 
     console.log("[v0] ThirdWeb IPFS upload successful:", ipfsHash)
 
@@ -72,10 +67,12 @@ export async function uploadFileToIPFS(file: File): Promise<IPFSUploadResult> {
   try {
     console.log("[v0] Uploading file to ThirdWeb IPFS:", file.name)
 
-    const storage = getStorage()
-    const uri = await storage.upload(file)
+    const uri = await upload({
+      client,
+      files: [file],
+    })
     const ipfsHash = uri.replace("ipfs://", "")
-    const gatewayUrl = storage.resolveScheme(uri)
+    const gatewayUrl = `https://ipfs.io/ipfs/${ipfsHash}`
 
     console.log("[v0] ThirdWeb IPFS file upload successful:", ipfsHash)
 
@@ -93,9 +90,12 @@ export async function uploadFileToIPFS(file: File): Promise<IPFSUploadResult> {
 // Retrieve data from IPFS
 export async function getFromIPFS(ipfsHash: string): Promise<any> {
   try {
-    const storage = getStorage()
     const uri = ipfsHash.startsWith("ipfs://") ? ipfsHash : `ipfs://${ipfsHash}`
-    const data = await storage.downloadJSON(uri)
+    const response = await download({
+      client,
+      uri,
+    })
+    const data = await response.json()
     return data
   } catch (error) {
     console.error("[v0] Error fetching from IPFS:", error)
@@ -117,9 +117,8 @@ export async function uploadAuditEvidence(evidence: EvidenceData): Promise<IPFSU
 
 // Generate IPFS gateway URL
 export function getIPFSGatewayUrl(ipfsHash: string): string {
-  const storage = getStorage()
-  const uri = ipfsHash.startsWith("ipfs://") ? ipfsHash : `ipfs://${ipfsHash}`
-  return storage.resolveScheme(uri)
+  const hash = ipfsHash.replace("ipfs://", "")
+  return `https://ipfs.io/ipfs/${hash}`
 }
 
 // Verify IPFS hash format

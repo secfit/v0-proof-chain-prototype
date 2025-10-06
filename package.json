@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@aws-sdk/client-lambda": "latest",
-    "@aws-sdk/client-secrets-manager": "latest",
     "@aws-sdk/credential-providers": "latest",
     "@coinbase/wallet-mobile-sdk": "latest",
     "@hookform/resolvers": "^3.10.0",
@@ -43,9 +42,6 @@
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "1.1.6",
     "@react-native-async-storage/async-storage": "latest",
-    "@thirdweb-dev/chains": "latest",
-    "@thirdweb-dev/sdk": "latest",
-    "@thirdweb-dev/storage": "latest",
     "@vercel/analytics": "latest",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
@@ -55,7 +51,6 @@
     "date-fns": "4.1.0",
     "embla-carousel-react": "8.5.1",
     "ethers": "latest",
-    "ethers-aws-kms-signer": "latest",
     "expo-linking": "latest",
     "expo-web-browser": "latest",
     "geist": "latest",
@@ -79,7 +74,6 @@
     "tailwindcss-animate": "^1.0.7",
     "thirdweb": "latest",
     "vaul": "^0.9.9",
-    "zksync-ethers": "latest",
     "zod": "3.25.67"
   },
   "devDependencies": {
