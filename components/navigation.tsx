@@ -2,13 +2,24 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Shield, Settings, Bell, ChevronDown, Menu, X, Moon, Sun } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Shield, Settings, Bell, ChevronDown, Menu, X, Moon, Sun, LogOut, User, Wallet } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const { user, logout, isAuthenticated } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
     // Check for saved theme preference or default to light mode
@@ -30,6 +41,15 @@ export function Navigation() {
       document.documentElement.classList.remove("dark")
       localStorage.setItem("theme", "light")
     }
+  }
+
+  const handleLogout = () => {
+    logout()
+    router.push("/")
+  }
+
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 6)}...${address.slice(-4)}`
   }
 
   return (
@@ -82,15 +102,62 @@ export function Navigation() {
             <Button variant="ghost" size="sm">
               <Settings className="w-4 h-4" />
             </Button>
-            <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className="bg-success/20 text-success border-success/30">
-                Developer
-              </Badge>
-              <Button variant="ghost" size="sm" className="flex items-center space-x-1">
-                <div className="w-6 h-6 bg-primary rounded-full"></div>
-                <ChevronDown className="w-3 h-3" />
+
+            {isAuthenticated && user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                        {user.authMethod === "email" ? (
+                          <User className="w-4 h-4 text-primary-foreground" />
+                        ) : (
+                          <Wallet className="w-4 h-4 text-primary-foreground" />
+                        )}
+                      </div>
+                      <div className="text-left">
+                        <div className="text-sm font-medium">
+                          {user.email || (user.walletAddress && formatAddress(user.walletAddress))}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {user.authMethod === "email" ? "Email" : "Wallet"}
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {user.email && (
+                    <DropdownMenuItem disabled>
+                      <User className="w-4 h-4 mr-2" />
+                      {user.email}
+                    </DropdownMenuItem>
+                  )}
+                  {user.walletAddress && (
+                    <DropdownMenuItem disabled>
+                      <Wallet className="w-4 h-4 mr-2" />
+                      {formatAddress(user.walletAddress)}
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push("/dashboard")}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button onClick={() => router.push("/login")} size="sm">
+                Sign In
               </Button>
-            </div>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -108,6 +175,28 @@ export function Navigation() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col space-y-3">
+              {isAuthenticated && user && (
+                <div className="px-2 py-3 border-b border-border mb-2">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                      {user.authMethod === "email" ? (
+                        <User className="w-5 h-5 text-primary-foreground" />
+                      ) : (
+                        <Wallet className="w-5 h-5 text-primary-foreground" />
+                      )}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">
+                        {user.email || (user.walletAddress && formatAddress(user.walletAddress))}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {user.authMethod === "email" ? "Email" : "Wallet"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <Link
                 href="/dashboard"
                 className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
@@ -141,6 +230,17 @@ export function Navigation() {
               <Link href="/help" className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1">
                 Help
               </Link>
+
+              {isAuthenticated ? (
+                <Button onClick={handleLogout} variant="outline" className="mx-2 mt-2 bg-transparent">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              ) : (
+                <Button onClick={() => router.push("/login")} className="mx-2 mt-2">
+                  Sign In
+                </Button>
+              )}
             </div>
           </div>
         )}
