@@ -180,24 +180,11 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Detailed system architecture
 - [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment guide
-- [API Documentation](./app/help/page.tsx) - API reference
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🆘 Support
 
 For support and questions:
-- Check the [Help Page](./app/help/page.tsx)
 - Review the [Architecture Documentation](./ARCHITECTURE.md)
 - Open an issue on GitHub
 
@@ -212,4 +199,3 @@ For support and questions:
 
 ---
 
-**Built with ❤️ for the decentralized future of smart contract security**
