@@ -1,8 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createAuditRequest, generateProjectTags } from "@/lib/simple-storage"
 import { createRealAuditRequestContracts, type AuditRequestData } from "@/lib/real-bytecode-deployment"
-import { createPlatformTokens, type AuditRequestTokenData, type DeveloperTokenData } from "@/lib/platform-contract-service"
-import { supabaseAuditService, type AuditRequest, type SmartContract, type NFT, type IPFSData, type Developer } from "@/lib/supabase-audit-service"
+import {
+  createPlatformTokens,
+  type AuditRequestTokenData,
+  type DeveloperTokenData,
+} from "@/lib/platform-contract-service"
+import {
+  supabaseAuditService,
+  type AuditRequest,
+  type SmartContract,
+  type NFT,
+  type IPFSData,
+  type Developer,
+} from "@/lib/supabase-audit-service"
 import { mapComplexityToSupabase } from "@/lib/enhanced-gpt-service"
 import { createHash } from "crypto"
 
@@ -10,7 +21,16 @@ export const dynamic = "force-dynamic"
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    let body
+    try {
+      body = await request.json()
+    } catch (e) {
+      console.error("[v0] Failed to parse request body:", e)
+      return NextResponse.json(
+        { error: "Invalid request body. Please ensure all data is properly formatted." },
+        { status: 400 },
+      )
+    }
     const {
       projectName,
       projectDescription,
@@ -24,6 +44,13 @@ export async function POST(request: NextRequest) {
       aiEstimation,
     } = body
 
+    if (!projectName || !githubUrl || !developerWallet) {
+      return NextResponse.json(
+        { error: "Missing required fields: projectName, githubUrl, or developerWallet" },
+        { status: 400 },
+      )
+    }
+
     console.log("[v0] Submitting audit request for:", projectName)
 
     // Generate repository hash
@@ -36,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     // Step 1: Create dynamic contracts and mint NFT
     console.log("[v0] Step 1: Creating dynamic contracts and minting NFT...")
-    
+
     const auditData: AuditRequestData = {
       projectName,
       githubUrl,
@@ -50,15 +77,21 @@ export async function POST(request: NextRequest) {
       description: projectDescription,
     }
 
-    const contractResult = await createRealAuditRequestContracts(auditData)
+    let contractResult
+    try {
+      contractResult = await createRealAuditRequestContracts(auditData)
 
-    if (!contractResult.success) {
-      throw new Error(contractResult.error || "Failed to create contracts")
+      if (!contractResult.success) {
+        throw new Error(contractResult.error || "Failed to create contracts")
+      }
+    } catch (error: any) {
+      console.error("[v0] Error creating contracts:", error)
+      return NextResponse.json({ error: `Contract creation failed: ${error.message}` }, { status: 500 })
     }
 
     // Step 1.5: Create platform tokens (audit request and developer tokens)
     console.log("[v0] Step 1.5: Creating platform tokens...")
-    
+
     const auditRequestTokenData: AuditRequestTokenData = {
       projectName,
       githubUrl,
@@ -85,23 +118,27 @@ export async function POST(request: NextRequest) {
       nftContractAddress: contractResult.nftContract!.address,
       nftTokenId: contractResult.nftMintResult!.tokenId,
       nftTransactionHash: contractResult.nftMintResult!.transactionHash,
-      totalProjects: 1, // This will be calculated from existing data in production
+      totalProjects: 1,
       totalSpent: Number.parseFloat(proposedPrice.toString()),
-      reputation: 100, // Default reputation, can be calculated from audit history
+      reputation: 100,
     }
 
-    // For now, we'll skip platform token creation since we need to detect wallet's contracts first
-    // This will be implemented when we have the wallet's contract addresses
-    const platformTokenResult = {
+    let platformTokenResult = {
       success: false,
-      error: "Wallet contract detection not yet implemented in submit flow"
+      error: "Platform token creation skipped",
+    }
+
+    try {
+      platformTokenResult = await createPlatformTokens(auditRequestTokenData, developerTokenData)
+    } catch (error: any) {
+      console.warn("[v0] Platform token creation failed:", error.message)
+      platformTokenResult.error = error.message
     }
 
     if (!platformTokenResult.success) {
       console.warn("[v0] Platform token creation failed:", platformTokenResult.error)
       console.warn("[v0] This is likely because platform contracts are not deployed yet.")
       console.warn("[v0] The audit request will still be processed, but platform tokens will not be created.")
-      // Don't fail the entire process if platform tokens fail
     }
 
     // Step 2: Save to simple storage
@@ -119,7 +156,7 @@ export async function POST(request: NextRequest) {
       status: "Available",
       requestNftId: contractResult.nftMintResult!.tokenId,
       requestNftTxHash: contractResult.nftMintResult!.transactionHash,
-      paymentTxHash: contractResult.nftMintResult!.transactionHash, // Using NFT tx as payment reference
+      paymentTxHash: contractResult.nftMintResult!.transactionHash,
       tags,
       createdAt: new Date().toISOString(),
     })
@@ -128,20 +165,20 @@ export async function POST(request: NextRequest) {
 
     // Step 3: Save comprehensive data to Supabase
     console.log("[v0] Step 3: Saving comprehensive data to Supabase...")
-    
-    let supabaseData = {
+
+    const supabaseData = {
       auditRequestId: null as string | null,
       contractIds: [] as string[],
       nftIds: [] as string[],
       ipfsIds: [] as string[],
       developerId: null as string | null,
       success: false,
-      error: null as string | null
+      error: null as string | null,
     }
 
     try {
       // 1. Create audit request in Supabase
-      const auditRequestData: Omit<AuditRequest, 'id' | 'created_at' | 'updated_at'> = {
+      const auditRequestData: Omit<AuditRequest, "id" | "created_at" | "updated_at"> = {
         project_name: projectName,
         project_description: projectDescription,
         github_url: githubUrl,
@@ -152,7 +189,7 @@ export async function POST(request: NextRequest) {
         auditor_count: Number.parseInt(auditorCount.toString()),
         developer_wallet: developerWallet,
         status: "Available",
-        tags
+        tags,
       }
 
       supabaseData.auditRequestId = await supabaseAuditService.createAuditRequest(auditRequestData)
@@ -160,14 +197,14 @@ export async function POST(request: NextRequest) {
 
       // 2. Create smart contract records
       if (contractResult.tokenContract) {
-        const tokenContractData: Omit<SmartContract, 'id' | 'created_at'> = {
+        const tokenContractData: Omit<SmartContract, "id" | "created_at"> = {
           audit_request_id: supabaseData.auditRequestId,
           contract_address: contractResult.tokenContract.address,
           contract_type: "ERC20",
           contract_name: contractResult.tokenContract.name,
           contract_symbol: contractResult.tokenContract.symbol,
-          deployment_hash: contractResult.tokenContract.explorerUrl.split('/').pop() || "",
-          explorer_url: contractResult.tokenContract.explorerUrl
+          deployment_hash: contractResult.tokenContract.explorerUrl.split("/").pop() || "",
+          explorer_url: contractResult.tokenContract.explorerUrl,
         }
 
         const tokenContractId = await supabaseAuditService.createSmartContract(tokenContractData)
@@ -176,14 +213,14 @@ export async function POST(request: NextRequest) {
       }
 
       if (contractResult.nftContract) {
-        const nftContractData: Omit<SmartContract, 'id' | 'created_at'> = {
+        const nftContractData: Omit<SmartContract, "id" | "created_at"> = {
           audit_request_id: supabaseData.auditRequestId,
           contract_address: contractResult.nftContract.address,
           contract_type: "ERC721",
           contract_name: contractResult.nftContract.name,
           contract_symbol: contractResult.nftContract.symbol,
-          deployment_hash: contractResult.nftContract.explorerUrl.split('/').pop() || "",
-          explorer_url: contractResult.nftContract.explorerUrl
+          deployment_hash: contractResult.nftContract.explorerUrl.split("/").pop() || "",
+          explorer_url: contractResult.nftContract.explorerUrl,
         }
 
         const nftContractId = await supabaseAuditService.createSmartContract(nftContractData)
@@ -193,16 +230,16 @@ export async function POST(request: NextRequest) {
 
       // 3. Create NFT record
       if (contractResult.nftMintResult) {
-        const nftData: Omit<NFT, 'id' | 'created_at'> = {
+        const nftData: Omit<NFT, "id" | "created_at"> = {
           audit_request_id: supabaseData.auditRequestId,
-          contract_id: supabaseData.contractIds[supabaseData.contractIds.length - 1], // Use the NFT contract ID
+          contract_id: supabaseData.contractIds[supabaseData.contractIds.length - 1],
           token_id: contractResult.nftMintResult.tokenId,
           token_name: `Audit Request: ${projectName}`,
           token_description: `NFT representing audit request for ${projectName}`,
           metadata_uri: contractResult.nftMintResult.metadataUri,
           owner_wallet: developerWallet,
           mint_transaction_hash: contractResult.nftMintResult.transactionHash,
-          explorer_url: contractResult.nftMintResult.explorerUrl
+          explorer_url: contractResult.nftMintResult.explorerUrl,
         }
 
         const nftId = await supabaseAuditService.createNFT(nftData)
@@ -212,14 +249,14 @@ export async function POST(request: NextRequest) {
 
       // 4. Create IPFS data record
       if (contractResult.nftMintResult?.metadataUri) {
-        const ipfsData: Omit<IPFSData, 'id' | 'created_at'> = {
+        const ipfsData: Omit<IPFSData, "id" | "created_at"> = {
           audit_request_id: supabaseData.auditRequestId,
           nft_id: supabaseData.nftIds[0],
-          ipfs_hash: contractResult.nftMintResult.metadataUri.replace('ipfs://', ''),
+          ipfs_hash: contractResult.nftMintResult.metadataUri.replace("ipfs://", ""),
           ipfs_uri: contractResult.nftMintResult.metadataUri,
           content_type: "Metadata",
           related_contract: contractResult.nftContract?.address,
-          related_token: contractResult.nftMintResult.tokenId
+          related_token: contractResult.nftMintResult.tokenId,
         }
 
         const ipfsId = await supabaseAuditService.createIPFSData(ipfsData)
@@ -228,14 +265,14 @@ export async function POST(request: NextRequest) {
       }
 
       // 5. Create or update developer record
-      const developerData: Omit<Developer, 'id' | 'created_at' | 'updated_at'> = {
+      const developerData: Omit<Developer, "id" | "created_at" | "updated_at"> = {
         wallet_address: developerWallet,
-        total_projects: 1, // This should be calculated from existing data
+        total_projects: 1,
         total_spent: Number.parseFloat(proposedPrice.toString()),
-        reputation_score: 100, // Default reputation
+        reputation_score: 100,
         first_project_date: new Date().toISOString(),
         last_activity: new Date().toISOString(),
-        status: "Active"
+        status: "Active",
       }
 
       supabaseData.developerId = await supabaseAuditService.createOrUpdateDeveloper(developerData)
@@ -243,7 +280,6 @@ export async function POST(request: NextRequest) {
 
       supabaseData.success = true
       console.log("[v0] 🎉 All data successfully saved to Supabase!")
-
     } catch (error: any) {
       console.error("[v0] ❌ Error saving data to Supabase:", error)
       supabaseData.error = error.message
@@ -285,6 +321,12 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error("[v0] Error submitting audit:", error)
-    return NextResponse.json({ error: error.message || "Failed to submit audit" }, { status: 500 })
+    return NextResponse.json(
+      {
+        error: error.message || "Failed to submit audit",
+        details: error.stack || "No additional details available",
+      },
+      { status: 500 },
+    )
   }
 }

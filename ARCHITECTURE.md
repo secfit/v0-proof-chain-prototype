@@ -16,7 +16,7 @@ ProofChain is a decentralized smart contract auditing marketplace built on a mod
 
 ## 🎯 High-Level Architecture
 
-```mermaid
+\`\`\`mermaid
 graph TB
     subgraph "Frontend Layer"
         A[Next.js App] --> B[React Components]
@@ -53,7 +53,7 @@ graph TB
     K --> S
     M --> U
     O --> W
-```
+\`\`\`
 
 ## 📱 Frontend Architecture
 
@@ -68,7 +68,7 @@ graph TB
 
 ### Component Structure
 
-```
+\`\`\`
 app/
 ├── layout.tsx                 # Root layout with providers
 ├── page.tsx                   # Landing page
@@ -85,7 +85,7 @@ app/
     ├── dashboard-supabase/   # Get dashboard data
     ├── estimate-audit/       # AI-powered estimation
     └── accept-audit/         # Accept audit request
-```
+\`\`\`
 
 ### Key Components
 
@@ -118,7 +118,7 @@ app/
 
 The backend follows RESTful principles with Next.js API routes:
 
-```typescript
+\`\`\`typescript
 // API Route Structure
 app/api/
 ├── submit-audit/route.ts      # POST - Create audit request
@@ -127,12 +127,12 @@ app/api/
 ├── accept-audit/route.ts      # POST - Accept audit
 ├── contracts/route.ts         # GET - Contract data
 └── wallet-data/route.ts       # GET - Wallet information
-```
+\`\`\`
 
 ### Service Layer Architecture
 
 #### Database Service (`lib/supabase-audit-service.ts`)
-```typescript
+\`\`\`typescript
 class SupabaseAuditService {
   // Audit Requests
   async createAuditRequest(data: AuditRequestData): Promise<AuditRequest>
@@ -155,10 +155,10 @@ class SupabaseAuditService {
   async getDeveloperProfile(wallet: string): Promise<Developer>
   async updateDeveloperStats(wallet: string, stats: DeveloperStats): Promise<void>
 }
-```
+\`\`\`
 
 #### Blockchain Service (`lib/thirdweb-contracts.ts`)
-```typescript
+\`\`\`typescript
 class ThirdwebContractService {
   // NFT Operations
   async mintAuditRequestNFT(data: NFTMintData): Promise<MintResult>
@@ -172,10 +172,10 @@ class ThirdwebContractService {
   async deployAuditRequestNFT(): Promise<ContractAddress>
   async deployProofChainToken(): Promise<ContractAddress>
 }
-```
+\`\`\`
 
 #### AI Service (`lib/enhanced-gpt-service.ts`)
-```typescript
+\`\`\`typescript
 class EnhancedGPTService {
   // Repository Analysis
   async analyzeRepository(githubUrl: string): Promise<RepositoryAnalysis>
@@ -187,10 +187,10 @@ class EnhancedGPTService {
   // Risk Assessment
   async assessRiskFactors(codebase: CodebaseData): Promise<RiskFactor[]>
 }
-```
+\`\`\`
 
 #### IPFS Service (`lib/ipfs-service.ts`)
-```typescript
+\`\`\`typescript
 class IPFSService {
   // File Operations
   async uploadFile(file: File): Promise<IPFSHash>
@@ -201,7 +201,7 @@ class IPFSService {
   async uploadMetadata(metadata: NFTMetadata): Promise<IPFSHash>
   async retrieveMetadata(hash: string): Promise<NFTMetadata>
 }
-```
+\`\`\`
 
 ## 🗄️ Database Architecture
 
@@ -210,7 +210,7 @@ class IPFSService {
 The database uses PostgreSQL with the following core tables:
 
 #### Audit Requests Table
-```sql
+\`\`\`sql
 CREATE TABLE audit_requests (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_name TEXT NOT NULL,
@@ -227,10 +227,10 @@ CREATE TABLE audit_requests (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-```
+\`\`\`
 
 #### Smart Contracts Table
-```sql
+\`\`\`sql
 CREATE TABLE smart_contracts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     audit_request_id UUID REFERENCES audit_requests(id),
@@ -244,10 +244,10 @@ CREATE TABLE smart_contracts (
     explorer_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-```
+\`\`\`
 
 #### NFTs Table
-```sql
+\`\`\`sql
 CREATE TABLE nfts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     audit_request_id UUID REFERENCES audit_requests(id),
@@ -261,10 +261,10 @@ CREATE TABLE nfts (
     explorer_url TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-```
+\`\`\`
 
 #### IPFS Data Table
-```sql
+\`\`\`sql
 CREATE TABLE ipfs_data (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     audit_request_id UUID REFERENCES audit_requests(id),
@@ -277,10 +277,10 @@ CREATE TABLE ipfs_data (
     related_token TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-```
+\`\`\`
 
 #### Developers Table
-```sql
+\`\`\`sql
 CREATE TABLE developers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     wallet_address TEXT UNIQUE NOT NULL,
@@ -293,11 +293,11 @@ CREATE TABLE developers (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-```
+\`\`\`
 
 ### Database Relationships
 
-```mermaid
+\`\`\`mermaid
 erDiagram
     AUDIT_REQUESTS ||--o{ SMART_CONTRACTS : "has"
     AUDIT_REQUESTS ||--o{ NFTS : "generates"
@@ -354,14 +354,14 @@ erDiagram
         integer reputation_score
         text status
     }
-```
+\`\`\`
 
 ## ⛓️ Blockchain Architecture
 
 ### Smart Contract Design
 
 #### AuditRequestNFT Contract
-```solidity
+\`\`\`solidity
 // ERC-721 for audit request certificates
 contract AuditRequestNFT is ERC721, Ownable {
     struct AuditRequest {
@@ -386,10 +386,10 @@ contract AuditRequestNFT is ERC721, Ownable {
         return tokenId;
     }
 }
-```
+\`\`\`
 
 #### ProofChainToken Contract
-```solidity
+\`\`\`solidity
 // ERC-20 for platform payments
 contract ProofChainToken is ERC20, Ownable {
     uint256 public constant INITIAL_SUPPLY = 1000000 * 10**18;
@@ -402,11 +402,11 @@ contract ProofChainToken is ERC20, Ownable {
         _mint(to, amount);
     }
 }
-```
+\`\`\`
 
 ### Blockchain Integration Flow
 
-```mermaid
+\`\`\`mermaid
 sequenceDiagram
     participant D as Developer
     participant F as Frontend
@@ -424,7 +424,7 @@ sequenceDiagram
     T-->>A: Return NFT Data
     A-->>F: Return Success Response
     F-->>D: Show NFT Confirmation
-```
+\`\`\`
 
 ## 🤖 AI Integration Architecture
 
@@ -432,7 +432,7 @@ sequenceDiagram
 
 The platform uses GPT-4 for intelligent audit estimation:
 
-```typescript
+\`\`\`typescript
 interface RepositoryAnalysis {
   solidityFiles: number;
   totalLines: number;
@@ -451,11 +451,11 @@ interface AuditEstimation {
   riskFactors: string[];
   recommendations: string[];
 }
-```
+\`\`\`
 
 ### AI Analysis Flow
 
-```mermaid
+\`\`\`mermaid
 flowchart TD
     A[GitHub Repository URL] --> B[Fetch Repository Data]
     B --> C[Analyze Solidity Files]
@@ -467,7 +467,7 @@ flowchart TD
     H --> I[Duration Calculation]
     I --> J[Generate Recommendations]
     J --> K[Return Analysis Results]
-```
+\`\`\`
 
 ## 📁 IPFS Storage Architecture
 
@@ -481,7 +481,7 @@ The platform uses IPFS for storing:
 
 ### IPFS Integration Flow
 
-```mermaid
+\`\`\`mermaid
 sequenceDiagram
     participant A as Application
     participant I as IPFS Service
@@ -494,7 +494,7 @@ sequenceDiagram
     I->>S: Store Hash in Database
     S-->>I: Confirm Storage
     I-->>A: Return IPFS URI
-```
+\`\`\`
 
 ## 🔐 Security Architecture
 
@@ -526,7 +526,7 @@ sequenceDiagram
 
 ### Authentication Flow
 
-```mermaid
+\`\`\`mermaid
 sequenceDiagram
     participant U as User
     participant F as Frontend
@@ -543,13 +543,13 @@ sequenceDiagram
     A->>T: Verify Token
     T-->>A: Return User Data
     A-->>F: Return Protected Data
-```
+\`\`\`
 
 ## 📊 Data Flow Architecture
 
 ### Complete System Data Flow
 
-```mermaid
+\`\`\`mermaid
 flowchart TD
     A[User Action] --> B[Frontend Component]
     B --> C[API Route]
@@ -582,7 +582,7 @@ flowchart TD
     D2 --> E2
     D3 --> E3
     D4 --> E4
-```
+\`\`\`
 
 ## 🚀 Performance Architecture
 
@@ -608,7 +608,7 @@ flowchart TD
 
 ### Caching Strategy
 
-```mermaid
+\`\`\`mermaid
 graph LR
     A[User Request] --> B[CDN Cache]
     B --> C{Cache Hit?}
@@ -620,13 +620,13 @@ graph LR
     G -->|No| I[Database Query]
     I --> J[Update Caches]
     J --> K[Return Data]
-```
+\`\`\`
 
 ## 🔄 Deployment Architecture
 
 ### Production Environment
 
-```mermaid
+\`\`\`mermaid
 graph TB
     subgraph "CDN Layer"
         A[Vercel Edge Network]
@@ -650,7 +650,7 @@ graph TB
     C --> E
     C --> F
     C --> G
-```
+\`\`\`
 
 ### Environment Configuration
 

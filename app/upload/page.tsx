@@ -182,27 +182,35 @@ export default function UploadPage() {
         }),
       })
 
-      const data = await response.json()
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to submit audit")
+        // Try to parse error as JSON, fallback to text if it fails
+        let errorMessage = "Failed to submit audit"
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.error || errorMessage
+        } catch (e) {
+          // If JSON parsing fails, try to get text
+          const errorText = await response.text()
+          errorMessage = errorText || `Server error: ${response.status}`
+        }
+        throw new Error(errorMessage)
       }
+
+      const data = await response.json()
+      // </CHANGE>
 
       console.log("[v0] Audit submitted successfully:", data)
 
-      // Simulate progress for blockchain anchoring
       setUploadProgress(70)
       await new Promise((resolve) => setTimeout(resolve, 500))
 
-      // Set contract result and show mint result
       setContractResult(data.contracts)
       setNftConfirmation(data.contracts.nftMint)
 
-      // Complete progress
       setUploadProgress(100)
       await new Promise((resolve) => setTimeout(resolve, 1000))
+      // </CHANGE>
 
-      // Show mint result instead of redirecting immediately
       setShowMintResult(true)
       setIsUploading(false)
     } catch (error: any) {

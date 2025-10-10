@@ -63,13 +63,13 @@ This guide covers the complete deployment process for the ProofChain platform, i
 
 1. In your Thirdweb project, go to Settings > Networks
 2. Add a custom network with these details:
-   ```
+   \`\`\`
    Network Name: ApeChain Testnet
    RPC URL: https://rpc-testnet.apechain.io
    Chain ID: 33139
    Currency Symbol: APE
    Block Explorer: https://testnet.apechain.io
-   ```
+   \`\`\`
 
 ### Step 3: Deploy Smart Contracts
 
@@ -116,17 +116,17 @@ This guide covers the complete deployment process for the ProofChain platform, i
 2. Click "New Project"
 3. Import your GitHub repository
 4. Configure build settings:
-   ```
+   \`\`\`
    Build Command: pnpm build
    Output Directory: .next
    Install Command: pnpm install
-   ```
+   \`\`\`
 
 #### Step 3: Configure Environment Variables
 
 In Vercel dashboard, go to Settings > Environment Variables and add:
 
-```env
+\`\`\`env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_THIRDWEB_CLIENT_ID=your_thirdweb_client_id
@@ -137,7 +137,7 @@ NEXT_PUBLIC_CHAIN_NAME=ApeChain Testnet
 NEXT_PUBLIC_RPC_URL=https://rpc-testnet.apechain.io
 NEXT_PUBLIC_AUDIT_REQUEST_NFT_CONTRACT=your_nft_contract_address
 NEXT_PUBLIC_PROOFCHAIN_TOKEN_CONTRACT=your_token_contract_address
-```
+\`\`\`
 
 #### Step 4: Deploy
 
@@ -149,7 +149,7 @@ NEXT_PUBLIC_PROOFCHAIN_TOKEN_CONTRACT=your_token_contract_address
 
 #### Step 1: Build the Application
 
-```bash
+\`\`\`bash
 # Install dependencies
 pnpm install
 
@@ -158,7 +158,7 @@ pnpm build
 
 # Start production server
 pnpm start
-```
+\`\`\`
 
 #### Step 2: Configure Web Server
 
@@ -249,10 +249,10 @@ Configure logging for:
 ### Debug Mode
 
 Enable debug mode by setting:
-```env
+\`\`\`env
 NODE_ENV=development
 DEBUG=true
-```
+\`\`\`
 
 ## 📊 Performance Optimization
 
