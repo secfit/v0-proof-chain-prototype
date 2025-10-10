@@ -120,26 +120,74 @@ export function Navigation() {
                           {user.email || (user.walletAddress && formatAddress(user.walletAddress))}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {user.authMethod === "email" ? "Email" : "Wallet"}
+                          {user.authMethod === "email" ? "Email" : 
+                           user.authMethod === "wallet" ? "Wallet" : 
+                           user.authMethod === "both" ? "Email + Wallet" : "User"}
                         </div>
                       </div>
                     </div>
                     <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuContent align="end" className="w-64">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {user.email && (
-                    <DropdownMenuItem disabled>
-                      <User className="w-4 h-4 mr-2" />
-                      {user.email}
+                    <DropdownMenuItem disabled className="flex flex-col items-start">
+                      <div className="flex items-center">
+                        <User className="w-4 h-4 mr-2" />
+                        <span className="font-medium">Email</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-6">{user.email}</span>
                     </DropdownMenuItem>
                   )}
                   {user.walletAddress && (
-                    <DropdownMenuItem disabled>
-                      <Wallet className="w-4 h-4 mr-2" />
-                      {formatAddress(user.walletAddress)}
+                    <DropdownMenuItem disabled className="flex flex-col items-start">
+                      <div className="flex items-center">
+                        <Wallet className="w-4 h-4 mr-2" />
+                        <span className="font-medium">Wallet</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-6 font-mono">{formatAddress(user.walletAddress)}</span>
+                    </DropdownMenuItem>
+                  )}
+                  {user.verifiedAt && (
+                    <DropdownMenuItem disabled className="flex flex-col items-start">
+                      <div className="flex items-center">
+                        <Shield className="w-4 h-4 mr-2" />
+                        <span className="font-medium">Verified</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-6">
+                        {new Date(user.verifiedAt).toLocaleDateString()}
+                      </span>
+                    </DropdownMenuItem>
+                  )}
+                  {user.isNewUser && (
+                    <DropdownMenuItem disabled className="flex flex-col items-start">
+                      <div className="flex items-center">
+                        <Shield className="w-4 h-4 mr-2" />
+                        <span className="font-medium">New User</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground ml-6">
+                        Welcome to ProofChain!
+                      </span>
+                    </DropdownMenuItem>
+                  )}
+                  {user.profiles && user.profiles.length > 0 && (
+                    <DropdownMenuItem disabled className="flex flex-col items-start">
+                      <div className="flex items-center">
+                        <Shield className="w-4 h-4 mr-2" />
+                        <span className="font-medium">Auth Profiles</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground ml-6 space-y-1">
+                        {user.profiles.map((profile, index) => (
+                          <div key={index} className="flex items-center gap-2">
+                            <span>{profile.type}:</span>
+                            <span className={profile.verified ? "text-green-500" : "text-yellow-500"}>
+                              {profile.identifier} {profile.verified ? "✓" : "⏳"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
@@ -190,8 +238,16 @@ export function Navigation() {
                         {user.email || (user.walletAddress && formatAddress(user.walletAddress))}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {user.authMethod === "email" ? "Email" : "Wallet"}
+                        {user.authMethod === "email" ? "Email" : 
+                         user.authMethod === "wallet" ? "Wallet" : 
+                         user.authMethod === "both" ? "Email + Wallet" : "User"}
                       </div>
+                      {user.email && user.walletAddress && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          <div>📧 {user.email}</div>
+                          <div>🔗 {formatAddress(user.walletAddress)}</div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

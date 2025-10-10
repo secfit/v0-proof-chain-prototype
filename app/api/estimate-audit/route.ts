@@ -1,6 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { fetchRepoContents, parseGitHubUrl } from "@/lib/github-service"
-import { estimateAuditWithAI } from "@/lib/ai-estimation-service"
+import { analyzeRepositoryWithGPT } from "@/lib/enhanced-gpt-service"
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,32 +7,15 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Received estimation request for:", githubUrl)
 
-    // Parse GitHub URL
-    const repoInfo = parseGitHubUrl(githubUrl)
-    if (!repoInfo) {
+    // Validate GitHub URL format
+    if (!githubUrl || !githubUrl.includes("github.com")) {
       return NextResponse.json({ error: "Invalid GitHub URL format" }, { status: 400 })
     }
 
-    // Fetch repository contents
-    const repoAnalysis = await fetchRepoContents(repoInfo)
+    // Analyze repository using GPT API (no GitHub API rate limits)
+    const { repoAnalysis, estimation } = await analyzeRepositoryWithGPT(githubUrl)
 
-    if (repoAnalysis.solidityFiles === 0) {
-      return NextResponse.json({ error: "No Solidity files found in repository" }, { status: 400 })
-    }
-
-    // Get combined code sample for AI analysis
-    const codeSample = repoAnalysis.files
-      .map((f) => f.content)
-      .join("\n\n")
-      .slice(0, 5000) // Limit to 5000 chars
-
-    // Get AI estimation
-    const estimation = await estimateAuditWithAI(
-      githubUrl,
-      codeSample,
-      repoAnalysis.totalLines,
-      repoAnalysis.solidityFiles,
-    )
+    console.log("[v0] Repository analysis completed successfully")
 
     return NextResponse.json({
       success: true,

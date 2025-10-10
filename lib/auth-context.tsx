@@ -5,7 +5,15 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 interface User {
   email?: string
   walletAddress?: string
-  authMethod: "email" | "wallet"
+  authMethod: "email" | "wallet" | "both"
+  verifiedAt?: string
+  token?: string
+  isNewUser?: boolean
+  profiles?: Array<{
+    type: string
+    identifier: string
+    verified: boolean
+  }>
 }
 
 interface AuthContextType {

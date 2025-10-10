@@ -29,6 +29,7 @@ import {
 import { useRouter } from "next/navigation"
 import { validateGitHubUrl } from "@/lib/github-service"
 import { calculatePayment } from "@/lib/payment-service"
+import { MintResultDisplay } from "@/components/MintResultDisplay"
 
 export default function UploadPage() {
   const router = useRouter()
@@ -38,6 +39,8 @@ export default function UploadPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
 
   const [nftConfirmation, setNftConfirmation] = useState<any>(null)
+  const [contractResult, setContractResult] = useState<any>(null)
+  const [showMintResult, setShowMintResult] = useState(false)
   const [walletAddress, setWalletAddress] = useState("")
 
   // Form state
@@ -191,15 +194,17 @@ export default function UploadPage() {
       setUploadProgress(70)
       await new Promise((resolve) => setTimeout(resolve, 500))
 
-      // Set NFT confirmation
-      setNftConfirmation(data.nft)
+      // Set contract result and show mint result
+      setContractResult(data.contracts)
+      setNftConfirmation(data.contracts.nftMint)
 
       // Complete progress
       setUploadProgress(100)
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // Redirect to dashboard
-      router.push("/dashboard")
+      // Show mint result instead of redirecting immediately
+      setShowMintResult(true)
+      setIsUploading(false)
     } catch (error: any) {
       console.error("[v0] Error submitting audit:", error)
       alert(error.message || "Failed to submit audit")
@@ -221,6 +226,21 @@ export default function UploadPage() {
   const paymentDetails = aiEstimation
     ? calculatePayment(Number.parseFloat(userPrice || aiEstimation.price), auditorMembers)
     : null
+
+  // Show mint result if available
+  if (showMintResult && contractResult) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <MintResultDisplay
+          tokenContract={contractResult.tokenContract}
+          nftContract={contractResult.nftContract}
+          nftMint={contractResult.nftMint}
+          onContinue={() => router.push("/dashboard")}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">

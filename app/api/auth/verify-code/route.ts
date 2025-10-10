@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { completeEmailAuth, getWalletInfo } from "@/lib/thirdweb-auth-service"
 
 export async function POST(request: Request) {
   try {
@@ -8,22 +9,30 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email and code are required" }, { status: 400 })
     }
 
-    // In production, verify the code from Redis/database
-    // For demo purposes, we'll accept any 6-digit code
-    if (code.length === 6 && /^\d+$/.test(code)) {
-      return NextResponse.json({
-        success: true,
-        message: "Email verified successfully",
-        user: {
-          email,
-          authMethod: "email",
-        },
-      })
-    }
+    console.log(`[Thirdweb Auth] Verifying code for: ${email}`)
 
-    return NextResponse.json({ error: "Invalid verification code" }, { status: 400 })
+    // Use official Thirdweb API to complete email authentication
+    const authResponse = await completeEmailAuth(email, code)
+
+    // Get additional wallet information
+    const walletInfo = await getWalletInfo(authResponse.token)
+
+    return NextResponse.json({
+      success: true,
+      message: "Email verified successfully",
+      user: {
+        email,
+        walletAddress: authResponse.walletAddress,
+        authMethod: "email",
+        token: authResponse.token,
+        isNewUser: authResponse.isNewUser,
+        profiles: walletInfo.profiles,
+      },
+    })
   } catch (error) {
-    console.error("[v0] Error verifying code:", error)
-    return NextResponse.json({ error: "Failed to verify code" }, { status: 500 })
+    console.error("[Thirdweb Auth] Error verifying code:", error)
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : "Failed to verify code" 
+    }, { status: 500 })
   }
 }

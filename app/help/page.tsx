@@ -34,6 +34,7 @@ export default function HelpPage() {
 
   const sections = [
     { id: "overview", label: "Overview", icon: BookOpen },
+    { id: "architecture", label: "Architecture", icon: Database },
     { id: "workflow", label: "Workflow", icon: Workflow },
     { id: "components", label: "Components", icon: Target },
     { id: "intersections", label: "Intersections", icon: Network },
@@ -59,7 +60,7 @@ export default function HelpPage() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8">
+          <TabsList className="grid w-full grid-cols-5 mb-8">
             {sections.map((section) => (
               <TabsTrigger key={section.id} value={section.id} className="flex items-center gap-2">
                 <section.icon className="w-4 h-4" />
@@ -327,6 +328,282 @@ export default function HelpPage() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          {/* Architecture Tab */}
+          <TabsContent value="architecture" className="space-y-8">
+            <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-2xl">
+                  <Database className="w-8 h-8 text-primary" />
+                  System Architecture Overview
+                </CardTitle>
+                <CardDescription className="text-lg">
+                  Modern web3 stack with privacy-first design and comprehensive blockchain integration
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Network className="w-5 h-5 text-primary" />
+                      Technology Stack
+                    </h3>
+                    <ul className="space-y-2 text-muted-foreground">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Frontend:</strong> Next.js 14, React 18, TypeScript, Tailwind CSS</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Database:</strong> Supabase (PostgreSQL) with Row Level Security</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Blockchain:</strong> ApeChain, Thirdweb SDK, Ethers.js</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Smart Contracts:</strong> Solidity, OpenZeppelin libraries</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Storage:</strong> IPFS for decentralized file storage</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>AI:</strong> OpenAI GPT-4 for intelligent analysis</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-accent" />
+                      Core Principles
+                    </h3>
+                    <ul className="space-y-2 text-muted-foreground">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Privacy-First:</strong> Complete anonymity for all participants</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Decentralized:</strong> Built on blockchain with IPFS storage</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Transparent:</strong> All interactions verifiable on-chain</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Scalable:</strong> Modern architecture supporting high throughput</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Secure:</strong> Multiple layers of security and verification</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="bg-primary/5 border-primary/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Database className="w-5 h-5 text-primary" />
+                    Database Layer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <h4 className="font-semibold text-sm mb-1">Supabase PostgreSQL</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Audit requests and metadata</li>
+                      <li>• Smart contract information</li>
+                      <li>• NFT and IPFS data tracking</li>
+                      <li>• Developer profiles and stats</li>
+                      <li>• Row Level Security (RLS)</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-accent/5 border-accent/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Network className="w-5 h-5 text-accent" />
+                    Blockchain Layer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <h4 className="font-semibold text-sm mb-1">ApeChain Integration</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• AuditRequestNFT (ERC-721)</li>
+                      <li>• ProofChainToken (ERC-20)</li>
+                      <li>• Immutable audit records</li>
+                      <li>• Cryptographic verification</li>
+                      <li>• Thirdweb SDK integration</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-success/5 border-success/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Hexagon className="w-5 h-5 text-success" />
+                    Storage Layer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <h4 className="font-semibold text-sm mb-1">IPFS Network</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Audit reports and findings</li>
+                      <li>• NFT metadata storage</li>
+                      <li>• Repository snapshots</li>
+                      <li>• Verification proofs</li>
+                      <li>• Decentralized access</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="bg-gradient-to-r from-accent/10 to-success/10 border-accent/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-2xl">
+                  <Workflow className="w-8 h-8 text-accent" />
+                  API Architecture
+                </CardTitle>
+                <CardDescription className="text-lg">
+                  RESTful API design with comprehensive service layer integration
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Target className="w-5 h-5 text-accent" />
+                      Core API Endpoints
+                    </h3>
+                    <ul className="space-y-2 text-muted-foreground">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>POST /api/submit-audit:</strong> Create new audit request</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>GET /api/dashboard-supabase:</strong> Fetch dashboard data</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>POST /api/estimate-audit:</strong> AI-powered estimation</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>POST /api/accept-audit:</strong> Accept audit request</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>GET /api/contracts:</strong> Get smart contract data</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-success" />
+                      Service Layer
+                    </h3>
+                    <ul className="space-y-2 text-muted-foreground">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>SupabaseAuditService:</strong> Database operations</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>ThirdwebContractService:</strong> Blockchain interactions</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>EnhancedGPTService:</strong> AI-powered analysis</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>IPFSService:</strong> Decentralized storage</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-gradient-to-r from-warning/10 to-primary/10 border-warning/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-2xl">
+                  <Shield className="w-8 h-8 text-warning" />
+                  Security Architecture
+                </CardTitle>
+                <CardDescription className="text-lg">
+                  Multi-layer security with privacy-preserving design
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Lock className="w-5 h-5 text-warning" />
+                      Privacy Protection
+                    </h3>
+                    <ul className="space-y-2 text-muted-foreground">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>AI Sanitization:</strong> Automatic code obfuscation</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Anonymization:</strong> No identity exposure</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>ZKP Verification:</strong> Cryptographic proofs</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>IPFS Encryption:</strong> Secure file storage</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                      <Eye className="w-5 h-5 text-primary" />
+                      Access Control
+                    </h3>
+                    <ul className="space-y-2 text-muted-foreground">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Row Level Security:</strong> Database access control</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Wallet Authentication:</strong> Thirdweb integration</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Smart Contract Security:</strong> OpenZeppelin standards</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>Rate Limiting:</strong> API protection</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Workflow Tab */}

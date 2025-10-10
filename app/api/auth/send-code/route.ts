@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { initiateEmailAuth } from "@/lib/thirdweb-auth-service"
 
 export async function POST(request: Request) {
   try {
@@ -8,23 +9,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid email address" }, { status: 400 })
     }
 
-    // Generate a 6-digit verification code
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    console.log(`[Thirdweb Auth] Initiating email authentication for: ${email}`)
 
-    // In production, send this via email service (SendGrid, AWS SES, etc.)
-    // For demo purposes, we'll log it and return it
-    console.log(`[v0] Verification code for ${email}: ${code}`)
+    // Use official Thirdweb API to initiate email authentication
+    const authResponse = await initiateEmailAuth(email)
 
-    // Store the code in memory (in production, use Redis or database)
-    // For demo, we'll return it directly
     return NextResponse.json({
       success: true,
-      message: "Verification code sent",
-      // Remove this in production - only for demo
-      code: code,
+      message: "Verification code sent to your email",
+      challenge: authResponse.challenge,
+      expiresAt: authResponse.expiresAt,
     })
   } catch (error) {
-    console.error("[v0] Error sending verification code:", error)
-    return NextResponse.json({ error: "Failed to send verification code" }, { status: 500 })
+    console.error("[Thirdweb Auth] Error sending verification code:", error)
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : "Failed to send verification code" 
+    }, { status: 500 })
   }
 }
