@@ -1,5 +1,22 @@
 # Current Process Flows
 
+## Platform Functional Overview _ Operational URLs
+
+The following URLs are **fully operational and interactive**.  
+In contrast, the remaining tabs and links are presently limited to displaying **MOOC-related data** only.
+
+### ✅ Active and Functional URLs
+- [https://v0-proof-chain-prototype.vercel.app/](https://v0-proof-chain-prototype.vercel.app/)
+- [https://v0-proof-chain-prototype.vercel.app/dashboard](https://v0-proof-chain-prototype.vercel.app/dashboard)
+- [https://v0-proof-chain-prototype.vercel.app/upload](https://v0-proof-chain-prototype.vercel.app/upload)
+- [https://v0-proof-chain-prototype.vercel.app/help](https://v0-proof-chain-prototype.vercel.app/help)
+
+---
+
+### ℹ️ Note
+The non-functional sections are currently serving as placeholders for **MOOC data** and will be updated in future iterations of the platform.
+
+
 ## `/upload` Page Web3 Flow
 
 ### 1. Wallet Connection
