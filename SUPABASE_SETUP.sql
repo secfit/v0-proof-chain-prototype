@@ -154,5 +154,3 @@ end $$;
 -- - Audit Result NFT is minted client-side; transaction details saved here.
 -- - Verification uses audit_results.ipfs_hash to fetch IPFS metadata.
 -- - Status casing: audit_requests: 'In Progress'/'Completed'; audit_owners/results: lowercase values.
-
-
