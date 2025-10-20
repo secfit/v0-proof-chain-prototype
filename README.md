@@ -67,7 +67,7 @@ ProofChain is a revolutionary platform that connects smart contract developers w
 
 Create a `.env.local` file in the root directory:
 
-\`\`\`env
+```env
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -86,37 +86,37 @@ NEXT_PUBLIC_RPC_URL=https://rpc-testnet.apechain.io
 
 # Optional: IPFS Configuration
 NEXT_PUBLIC_IPFS_GATEWAY=https://ipfs.io/ipfs/
-\`\`\`
+```
 
 ### Installation Steps
 
 1. **Clone the repository**
-   \`\`\`bash
+   ```bash
    git clone <repository-url>
    cd v0-proof-chain-prototype
-   \`\`\`
+   ```
 
 2. **Install dependencies**
-   \`\`\`bash
+   ```bash
    pnpm install
-   \`\`\`
+   ```
 
 3. **Set up Supabase database**
-   \`\`\`bash
+   ```bash
    # Run the SQL schema in your Supabase SQL Editor
    cat SUPABASE_DATABASE_SCHEMA.sql
-   \`\`\`
+   ```
 
 4. **Deploy smart contracts** (optional for development)
-   \`\`\`bash
+   ```bash
    npx hardhat compile
    npx hardhat run scripts/deploy-platform-contracts.js --network apechain-testnet
-   \`\`\`
+   ```
 
 5. **Start development server**
-   \`\`\`bash
+   ```bash
    pnpm dev
-   \`\`\`
+   ```
 
 6. **Open your browser**
    Navigate to `http://localhost:3000`
@@ -143,7 +143,7 @@ NEXT_PUBLIC_IPFS_GATEWAY=https://ipfs.io/ipfs/
 
 ### Project Structure
 
-\`\`\`
+```
 ├── app/                    # Next.js app directory
 │   ├── api/               # API routes
 │   ├── dashboard/         # Developer dashboard
@@ -155,7 +155,7 @@ NEXT_PUBLIC_IPFS_GATEWAY=https://ipfs.io/ipfs/
 ├── contracts/             # Smart contracts
 ├── public/                # Static assets
 └── scripts/               # Deployment and utility scripts
-\`\`\`
+```
 
 ### Key Services
 
