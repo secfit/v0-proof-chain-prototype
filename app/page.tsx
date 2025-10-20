@@ -4,7 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, ArrowRight, Upload, Search, FileCheck } from "lucide-react"
 import Link from "next/link"
-import { VerifyProofButton } from "@/components/verify-proof-button"
 
 export default function HomePage() {
   return (
@@ -34,7 +33,6 @@ export default function HomePage() {
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Link>
             </Button>
-            <VerifyProofButton variant="outline" size="lg" />
             <Button variant="outline" size="lg">
               Watch Demo
             </Button>
@@ -174,7 +172,9 @@ export default function HomePage() {
             <Button variant="outline" size="lg" asChild>
               <Link href="/marketplace">Browse Auditors</Link>
             </Button>
-            <VerifyProofButton variant="outline" size="lg" />
+            <Button variant="outline" size="lg" asChild>
+              <Link href="/blockchain">View Blockchain</Link>
+            </Button>
           </div>
         </div>
       </section>

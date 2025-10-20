@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -20,11 +20,7 @@ import {
   Eye,
   Download,
   Zap,
-  Loader2,
-  Check,
-  X,
 } from "lucide-react"
-import { useSearchParams } from "next/navigation"
 
 // Mock verification data
 const mockVerifications = [
@@ -83,86 +79,10 @@ const zkpCircuitDetails = {
   },
 }
 
-interface VerificationData {
-  auditRequest: {
-    id: string
-    projectName: string
-    developerWallet: string
-    deadline: string
-    status: string
-    createdAt: string
-  }
-  smartContracts: Array<{
-    id: string
-    contract_address: string
-    contract_type: string
-    contract_name: string
-    contract_symbol: string
-    total_supply: number
-    decimals: number
-    deployment_hash: string
-    explorer_url: string
-  }>
-  auditor: {
-    name: string
-    wallet: string
-    acceptedAt: string
-  }
-  auditResult: {
-    id: string
-    findingsCount: number
-    vulnerabilitiesCount: number
-    severityBreakdown: any
-    completionDate: string
-    status: string
-    evidenceFileHashes: string
-  }
-  nft: {
-    id: string
-    address: string
-    transactionHash: string
-    explorerUrl: string
-    metadataUri: string
-    ipfsHash: string | null
-    ipfsUrl: string | null
-  }
-  findings: any[]
-  ipfsData: any
-  ipfsError: string | null
-  verification: {
-    verified: boolean
-    verifiedAt: string
-    blockchainVerified: boolean
-    ipfsVerified: boolean
-    ipfsError: string | null
-  }
-}
-
 export default function VerificationPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedVerification, setSelectedVerification] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("search")
-  const [isVerifying, setIsVerifying] = useState(false)
-  const [verificationData, setVerificationData] = useState<VerificationData | null>(null)
-  const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set())
-  const searchParams = useSearchParams()
-
-  useEffect(() => {
-    const hash = searchParams.get("hash")
-    if (hash) {
-      setSearchQuery(hash)
-      setActiveTab("search")
-      // Auto-select first matching verification
-      const match = mockVerifications.find(
-        (v) =>
-          v.commitmentHash.toLowerCase().includes(hash.toLowerCase()) ||
-          v.proofHash.toLowerCase().includes(hash.toLowerCase()),
-      )
-      if (match) {
-        setSelectedVerification(match.id)
-      }
-    }
-  }, [searchParams])
 
   const filteredVerifications = mockVerifications.filter(
     (v) =>
@@ -171,62 +91,8 @@ export default function VerificationPage() {
       v.auditor.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
-  const copyToClipboard = (text: string, itemId: string) => {
+  const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
-    setCopiedItems(prev => new Set(prev).add(itemId))
-    setTimeout(() => {
-      setCopiedItems(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(itemId)
-        return newSet
-      })
-    }, 2000)
-  }
-
-  const verifyAudit = async () => {
-    if (!searchQuery.trim()) {
-      alert("Please enter an audit request ID")
-      return
-    }
-
-    setIsVerifying(true)
-    try {
-      console.log('[Verification] Verifying audit request ID:', searchQuery)
-      
-      const response = await fetch('/api/verify-audit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ auditRequestId: searchQuery.trim() }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to verify audit')
-      }
-
-      console.log('[Verification] Verification successful:', data.data)
-      setVerificationData(data.data)
-      // Don't open dialog, results will be shown inline
-    } catch (error: any) {
-      console.error('[Verification] Error:', error)
-      alert("Verification failed: " + error.message)
-    } finally {
-      setIsVerifying(false)
-    }
-  }
-
-  const handleVerifyProof = () => {
-    setActiveTab("search")
-    // Scroll to the search input
-    setTimeout(() => {
-      const searchInput = document.querySelector('input[placeholder*="commitment hash"]') as HTMLInputElement
-      if (searchInput) {
-        searchInput.focus()
-      }
-    }, 100)
   }
 
   const getStatusColor = (status: string) => {
@@ -262,18 +128,14 @@ export default function VerificationPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Audit Certificate Verification</h1>
-          <p className="text-muted-foreground mb-6">
-            Verify audit certificates by entering an audit request ID. Get comprehensive audit results, blockchain proof, and IPFS data.
+          <h1 className="text-3xl font-bold text-foreground mb-2">ZKP Verification Portal</h1>
+          <p className="text-muted-foreground">
+            Verify audit proofs and explore cryptographic evidence on ApeChain blockchain
           </p>
-          <Button size="lg" onClick={handleVerifyProof} className="bg-primary hover:bg-primary/90">
-            <Shield className="w-5 h-5 mr-2" />
-            Verify Certificate
-          </Button>
         </div>
 
         {/* Stats Cards */}
-        {/*<div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Verifications</CardTitle>
@@ -317,23 +179,23 @@ export default function VerificationPage() {
               <p className="text-xs text-muted-foreground">ZKP circuit types</p>
             </CardContent>
           </Card>
-        </div>*/}
+        </div>
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="search">Search & Verify</TabsTrigger>
-            {/*<TabsTrigger value="recent">Recent Verifications</TabsTrigger>
+            <TabsTrigger value="recent">Recent Verifications</TabsTrigger>
             <TabsTrigger value="circuits">ZKP Circuits</TabsTrigger>
-            <TabsTrigger value="explorer">Blockchain Explorer</TabsTrigger>*/}
+            <TabsTrigger value="explorer">Blockchain Explorer</TabsTrigger>
           </TabsList>
 
           <TabsContent value="search" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Verify Audit Certificate</CardTitle>
+                <CardTitle>Verify Audit Proof</CardTitle>
                 <CardDescription>
-                  Enter an audit request ID to verify the audit certificate and retrieve comprehensive audit results
+                  Enter a commitment hash, proof hash, or project name to verify audit results
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -341,447 +203,44 @@ export default function VerificationPage() {
                   <div className="flex space-x-2">
                     <div className="flex-1">
                       <Input
-                        placeholder="Enter audit request ID to verify..."
+                        placeholder="Enter commitment hash, proof hash, or project name..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && verifyAudit()}
                       />
                     </div>
-                    <Button 
-                      onClick={verifyAudit}
-                      disabled={isVerifying || !searchQuery.trim()}
-                    >
-                      {isVerifying ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
+                    <Button>
                       <Search className="w-4 h-4 mr-2" />
-                      )}
-                      {isVerifying ? 'Verifying...' : 'Verify'}
+                      Search
                     </Button>
                   </div>
 
-                  {searchQuery && !isVerifying && !verificationData && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Click "Verify" to check the audit certificate</p>
-                    </div>
-                  )}
-
-                  {/* Verification Results */}
-                  {verificationData && (
-                    <div className="space-y-6 mt-6">
-                      <div className="border-t pt-6">
-                        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                          Verification Results
-                        </h3>
-                        
-                        {/* Verification Status */}
-                        <Card className="mb-6">
-                          <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                              <CheckCircle className="w-5 h-5 text-green-500" />
-                              Verification Status
-                            </CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="flex items-center gap-2">
-                                {verificationData.verification.blockchainVerified ? (
-                                  <CheckCircle className="w-4 h-4 text-green-500" />
-                                ) : (
-                                  <X className="w-4 h-4 text-red-500" />
-                                )}
-                                <span className="text-sm">Blockchain Verified</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {verificationData.verification.ipfsVerified ? (
-                                  <CheckCircle className="w-4 h-4 text-green-500" />
-                                ) : (
-                                  <X className="w-4 h-4 text-red-500" />
-                                )}
-                                <span className="text-sm">IPFS Verified</span>
-                                {verificationData.verification.ipfsError && (
-                                  <span className="text-xs text-red-500 ml-2">
-                                    ({verificationData.verification.ipfsError})
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <span className="text-sm">Database Verified</span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* Project Information */}
-                        <Card className="mb-6">
-                          <CardHeader>
-                            <CardTitle>Project Information</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <Label className="text-sm font-medium">Project Name</Label>
-                                <p className="text-sm font-semibold">{verificationData.auditRequest.projectName}</p>
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium">Audit Request ID</Label>
-                                <p className="text-sm font-mono">#{verificationData.auditRequest.id}</p>
-                              </div>
-                              {verificationData.smartContracts && verificationData.smartContracts.length > 0 && (
-                                <div className="md:col-span-2">
-                                  <Label className="text-sm font-medium">Smart Contracts</Label>
-                                  <div className="space-y-2 mt-2">
-                                    {verificationData.smartContracts.map((contract, index) => (
-                                      <div key={contract.id} className="border border-border rounded-lg p-3">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <div>
-                                            <p className="text-sm font-semibold">{contract.contract_name || `Contract ${index + 1}`}</p>
-                                            <p className="text-xs text-muted-foreground">{contract.contract_type}</p>
-                                          </div>
-                                          <Badge variant="outline">{contract.contract_symbol || 'N/A'}</Badge>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <p className="text-sm font-mono flex-1 truncate">{contract.contract_address}</p>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => copyToClipboard(contract.contract_address, `contract-${index}`)}
-                                            className="h-8 w-8 p-0"
-                                          >
-                                            {copiedItems.has(`contract-${index}`) ? (
-                                              <Check className="w-4 h-4 text-green-500" />
-                                            ) : (
-                                              <Copy className="w-4 h-4" />
-                                            )}
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
-                                            className="h-8 w-8 p-0"
-                                          >
-                                            <a 
-                                              href={`https://curtis.explorer.caldera.xyz/address/${contract.contract_address}`}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                            >
-                                              <ExternalLink className="w-4 h-4" />
-                                            </a>
-                                          </Button>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-                              <div>
-                                <Label className="text-sm font-medium">Developer Wallet</Label>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-mono flex-1 truncate">{verificationData.auditRequest.developerWallet}</p>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => copyToClipboard(verificationData.auditRequest.developerWallet, 'developer-wallet')}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    {copiedItems.has('developer-wallet') ? (
-                                      <Check className="w-4 h-4 text-green-500" />
-                                    ) : (
-                                      <Copy className="w-4 h-4" />
-                                    )}
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* Auditor Information */}
-                        <Card className="mb-6">
-                          <CardHeader>
-                            <CardTitle>Auditor Information</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                                <Label className="text-sm font-medium">Auditor Name</Label>
-                                <p className="text-sm font-semibold">{verificationData.auditor.name}</p>
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium">Auditor Wallet</Label>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-mono flex-1 truncate">{verificationData.auditor.wallet}</p>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => copyToClipboard(verificationData.auditor.wallet, 'auditor-wallet')}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    {copiedItems.has('auditor-wallet') ? (
-                                      <Check className="w-4 h-4 text-green-500" />
-                                    ) : (
-                                      <Copy className="w-4 h-4" />
-                                    )}
-                                  </Button>
-                                </div>
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium">Accepted At</Label>
-                                <p className="text-sm">{new Date(verificationData.auditor.acceptedAt).toLocaleString()}</p>
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium">Completed At</Label>
-                                <p className="text-sm">{new Date(verificationData.auditResult.completionDate).toLocaleString()}</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* Audit Results */}
-                        <Card className="mb-6">
-                          <CardHeader>
-                            <CardTitle>Audit Results</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div>
-                                <Label className="text-sm font-medium">Total Findings</Label>
-                                <p className="text-2xl font-bold">{verificationData.auditResult.findingsCount}</p>
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium">Vulnerabilities</Label>
-                                <p className="text-2xl font-bold text-red-500">{verificationData.auditResult.vulnerabilitiesCount}</p>
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium">Status</Label>
-                                <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
-                                  <CheckCircle className="w-3 h-3 mr-1" />
-                                  {verificationData.auditResult.status}
+                  {searchQuery && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold">Search Results</h3>
+                      {filteredVerifications.map((verification) => (
+                        <div
+                          key={verification.id}
+                          className="border border-border rounded-lg p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                          onClick={() => setSelectedVerification(verification.id)}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold">{verification.projectName}</h4>
+                            <Badge className={getStatusColor(verification.verificationStatus)}>
+                              {getStatusIcon(verification.verificationStatus)}
+                              <span className="ml-1 capitalize">{verification.verificationStatus}</span>
                             </Badge>
                           </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+                            <div>
+                              <span className="font-medium">Commitment Hash:</span>
+                              <div className="font-mono text-xs break-all">{verification.commitmentHash}</div>
                             </div>
-
-                            {verificationData.auditResult.severityBreakdown && (
-                              <div>
-                                <Label className="text-sm font-medium">Severity Breakdown</Label>
-                                <div className="flex items-center gap-4 mt-2">
-                                  {verificationData.auditResult.severityBreakdown.critical > 0 && (
-                                    <Badge variant="destructive" className="text-xs">
-                                      {verificationData.auditResult.severityBreakdown.critical} Critical
-                                    </Badge>
-                                  )}
-                                  {verificationData.auditResult.severityBreakdown.high > 0 && (
-                                    <Badge variant="secondary" className="text-xs bg-orange-500/20 text-orange-500">
-                                      {verificationData.auditResult.severityBreakdown.high} High
-                                    </Badge>
-                                  )}
-                                  {verificationData.auditResult.severityBreakdown.medium > 0 && (
-                                    <Badge variant="secondary" className="text-xs bg-yellow-500/20 text-yellow-500">
-                                      {verificationData.auditResult.severityBreakdown.medium} Medium
-                                    </Badge>
-                                  )}
-                                  {verificationData.auditResult.severityBreakdown.low > 0 && (
-                                    <Badge variant="secondary" className="text-xs">
-                                      {verificationData.auditResult.severityBreakdown.low} Low
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-
-                        {/* NFT Information */}
-                        <Card className="mb-6">
-                          <CardHeader>
-                            <CardTitle>Audit Result NFT</CardTitle>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div>
-                                <Label className="text-sm font-medium">Token ID</Label>
-                                <p className="text-sm font-mono">#{verificationData.nft.id}</p>
-                              </div>
-                              {verificationData.nft.address && (
-                                <div>
-                                  <Label className="text-sm font-medium">Contract Address</Label>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-mono flex-1 truncate">{verificationData.nft.address}</p>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => copyToClipboard(verificationData.nft.address, 'nft-contract')}
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      {copiedItems.has('nft-contract') ? (
-                                        <Check className="w-4 h-4 text-green-500" />
-                                      ) : (
-                                        <Copy className="w-4 h-4" />
-                                      )}
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      asChild
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      <a 
-                                        href={`https://curtis.explorer.caldera.xyz/address/${verificationData.nft.address}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
-                                        <ExternalLink className="w-4 h-4" />
-                                      </a>
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
-                              {verificationData.nft.transactionHash && (
-                                <div>
-                                  <Label className="text-sm font-medium">Transaction Hash</Label>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-mono flex-1 truncate">{verificationData.nft.transactionHash}</p>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      onClick={() => copyToClipboard(verificationData.nft.transactionHash, 'nft-tx')}
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      {copiedItems.has('nft-tx') ? (
-                                        <Check className="w-4 h-4 text-green-500" />
-                                      ) : (
-                                        <Copy className="w-4 h-4" />
-                                      )}
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      asChild
-                                      className="h-8 w-8 p-0"
-                                    >
-                                      <a 
-                                        href={`https://curtis.explorer.caldera.xyz/tx/${verificationData.nft.transactionHash}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                      >
-                                        <ExternalLink className="w-4 h-4" />
-                                      </a>
-                                    </Button>
-                                  </div>
-                                </div>
-                              )}
+                            <div>
+                              <span className="font-medium">Auditor:</span> {verification.auditor}
                             </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* IPFS Data */}
-                        <Card className="mb-6">
-                          <CardHeader>
-                            <CardTitle>IPFS Audit Data</CardTitle>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-4">
-                              <div>
-                                <Label className="text-sm font-medium">IPFS Hash</Label>
-                                <div className="flex items-center gap-2">
-                                  <p className="text-sm font-mono flex-1 truncate">{verificationData.nft.ipfsHash || verificationData.nft.metadataUri}</p>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => copyToClipboard(verificationData.nft.ipfsHash || verificationData.nft.metadataUri, 'ipfs-hash')}
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    {copiedItems.has('ipfs-hash') ? (
-                                      <Check className="w-4 h-4 text-green-500" />
-                                    ) : (
-                                      <Copy className="w-4 h-4" />
-                                    )}
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    asChild
-                                    className="h-8 w-8 p-0"
-                                  >
-                                    <a 
-                                      href={verificationData.nft.ipfsUrl || verificationData.nft.ipfsHash || verificationData.nft.metadataUri}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                    >
-                                      <ExternalLink className="w-4 h-4" />
-                                    </a>
-                                  </Button>
-                                </div>
-                              </div>
-                              
-                              {verificationData.ipfsData ? (
-                                <div>
-                                  <Label className="text-sm font-medium">IPFS Content Preview</Label>
-                                  <div className="bg-muted/50 p-4 rounded-lg max-h-40 overflow-y-auto">
-                                    <pre className="text-xs whitespace-pre-wrap">
-                                      {JSON.stringify(verificationData.ipfsData, null, 2)}
-                                    </pre>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div>
-                                  <Label className="text-sm font-medium">IPFS Status</Label>
-                                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <X className="w-4 h-4 text-red-500" />
-                                      <span className="text-sm font-medium text-red-700">IPFS Data Not Available</span>
-                                    </div>
-                                    <p className="text-sm text-red-600">
-                                      {verificationData.ipfsError || 'Unable to fetch IPFS data'}
-                                    </p>
-                                    <p className="text-xs text-red-500 mt-2">
-                                      You can still access the IPFS data directly using the link above.
-                                    </p>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-
-                        {/* Findings */}
-                        {verificationData.findings && verificationData.findings.length > 0 && (
-                          <Card className="mb-6">
-                            <CardHeader>
-                              <CardTitle>Audit Findings</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-4">
-                                {verificationData.findings.map((finding, index) => (
-                                  <div key={index} className="border border-border rounded-lg p-4">
-                                    <div className="flex items-center justify-between mb-2">
-                                      <h4 className="font-semibold">{finding.title}</h4>
-                                      <Badge 
-                                        variant={finding.finding_severity === 'critical' ? 'destructive' : 
-                                               finding.finding_severity === 'high' ? 'secondary' : 'outline'}
-                                        className={finding.finding_severity === 'high' ? 'bg-orange-500/20 text-orange-500' : 
-                                                  finding.finding_severity === 'medium' ? 'bg-yellow-500/20 text-yellow-500' : ''}
-                                      >
-                                        {finding.finding_severity}
-                                      </Badge>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground mb-2">{finding.description}</p>
-                                    {finding.recommendation && (
-                                      <div>
-                                        <Label className="text-xs font-medium">Recommendation:</Label>
-                                        <p className="text-xs text-muted-foreground">{finding.recommendation}</p>
-                                      </div>
-                                    )}
+                          </div>
                         </div>
                       ))}
-                              </div>
-                            </CardContent>
-                          </Card>
-                        )}
-                      </div>
                     </div>
                   )}
                 </div>
@@ -815,7 +274,7 @@ export default function VerificationPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => copyToClipboard(verification.commitmentHash, 'commitment-hash')}
+                                  onClick={() => copyToClipboard(verification.commitmentHash)}
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
@@ -828,7 +287,7 @@ export default function VerificationPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => copyToClipboard(verification.proofHash, 'proof-hash')}
+                                  onClick={() => copyToClipboard(verification.proofHash)}
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
@@ -1077,7 +536,6 @@ export default function VerificationPage() {
           </TabsContent>
         </Tabs>
       </div>
-
     </div>
   )
 }

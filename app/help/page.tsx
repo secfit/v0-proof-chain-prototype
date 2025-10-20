@@ -5,7 +5,6 @@ import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
 import {
   Shield,
   Upload,
@@ -24,8 +23,6 @@ import {
   Lightbulb,
   Target,
   Workflow,
-  Database,
-  Hexagon,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -34,7 +31,6 @@ export default function HelpPage() {
 
   const sections = [
     { id: "overview", label: "Overview", icon: BookOpen },
-    { id: "architecture", label: "Architecture", icon: Database },
     { id: "workflow", label: "Workflow", icon: Workflow },
     { id: "components", label: "Components", icon: Target },
     { id: "intersections", label: "Intersections", icon: Network },
@@ -60,7 +56,7 @@ export default function HelpPage() {
 
         {/* Navigation Tabs */}
         <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8">
+          <TabsList className="grid w-full grid-cols-4 mb-8">
             {sections.map((section) => (
               <TabsTrigger key={section.id} value={section.id} className="flex items-center gap-2">
                 <section.icon className="w-4 h-4" />
@@ -79,7 +75,7 @@ export default function HelpPage() {
                 </CardTitle>
                 <CardDescription className="text-lg">
                   The world's first privacy-preserving smart contract auditing marketplace powered by Zero-Knowledge
-                  Proofs, NFTs, and IPFS
+                  Proofs
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -105,22 +101,14 @@ export default function HelpPage() {
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>NFT Audit Trail:</strong> Three linked NFTs (Request, Owner, Result) create immutable
-                          proof of audit lifecycle
+                          <strong>Cryptographic Proof:</strong> ZKP verification ensures audit integrity without
+                          revealing details
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>IPFS Evidence Storage:</strong> Decentralized storage ensures audit evidence is
-                          permanent and tamper-proof
-                        </span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span>
-                          <strong>Blockchain Anchoring:</strong> Immutable audit records on ApeChain with cryptographic
-                          verification
+                          <strong>Blockchain Anchoring:</strong> Immutable audit records on ApeChain
                         </span>
                       </li>
                     </ul>
@@ -134,151 +122,30 @@ export default function HelpPage() {
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>For Developers:</strong> Secure audits without exposing proprietary code, with NFT
-                          proof of audit request
+                          <strong>For Developers:</strong> Secure audits without exposing proprietary code
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>For Auditors:</strong> Access to quality projects with fair compensation and NFT
-                          ownership certificates
+                          <strong>For Auditors:</strong> Access to quality projects with fair compensation
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>For Investors:</strong> Verifiable audit quality through cryptographic proofs and
-                          on-chain NFT verification
+                          <strong>For Investors:</strong> Verifiable audit quality through cryptographic proofs
                         </span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
                         <span>
-                          <strong>For Ecosystem:</strong> Higher security standards with permanent, decentralized audit
-                          records
+                          <strong>For Ecosystem:</strong> Higher security standards across all smart contracts
                         </span>
                       </li>
                     </ul>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-accent/10 to-success/10 border-accent/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-2xl">
-                  <Hexagon className="w-8 h-8 text-accent" />
-                  NFT & IPFS Technology Stack
-                </CardTitle>
-                <CardDescription className="text-lg">
-                  Three-tier NFT system with decentralized evidence storage
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-3 gap-6">
-                  <Card className="bg-primary/5 border-primary/20">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Upload className="w-5 h-5 text-primary" />
-                        Audit Request NFT
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
-                      <p className="text-muted-foreground">
-                        <strong>Minted when:</strong> Developer submits contract for audit
-                      </p>
-                      <p className="text-muted-foreground">
-                        <strong>Contains:</strong> Project metadata, complexity, proposed price, GitHub hash, tags
-                      </p>
-                      <p className="text-muted-foreground">
-                        <strong>Status:</strong> Available - Acts as digital job posting
-                      </p>
-                      <Badge variant="outline" className="mt-2">
-                        ERC-721 on ApeChain
-                      </Badge>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-accent/5 border-accent/20">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <Shield className="w-5 h-5 text-accent" />
-                        Audit Owner NFT
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
-                      <p className="text-muted-foreground">
-                        <strong>Current behavior:</strong> No minting on acceptance; status changes to "In Progress"
-                      </p>
-                      <p className="text-muted-foreground">
-                        <strong>Planned contents:</strong> Auditor details, accepted price, timeline, ref to Request NFT
-                      </p>
-                      <p className="text-muted-foreground">
-                        <strong>Status:</strong> Planned (not minted in current release)
-                      </p>
-                      <Badge variant="outline" className="mt-2">
-                        Planned ERC-721 on ApeChain
-                      </Badge>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-success/5 border-success/20">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-base">
-                        <FileCheck className="w-5 h-5 text-success" />
-                        Audit Result NFT
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-2 text-sm">
-                      <p className="text-muted-foreground">
-                        <strong>Minted when:</strong> Auditor submits audit results (client-side wallet minting)
-                      </p>
-                      <p className="text-muted-foreground">
-                        <strong>Contains:</strong> IPFS hash (metadata), findings summary, vulnerabilities, links
-                      </p>
-                      <p className="text-muted-foreground">
-                        <strong>Status:</strong> Completed - Immutable audit proof
-                      </p>
-                      <Badge variant="outline" className="mt-2">
-                        ERC-721 on ApeChain
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <Card className="bg-muted/30">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      <Database className="w-5 h-5" />
-                      IPFS Evidence Storage
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 text-sm">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-semibold mb-2">Stored on IPFS:</h4>
-                        <ul className="space-y-1 text-muted-foreground">
-                          <li>• Complete audit findings and recommendations</li>
-                          <li>• Vulnerability assessment details</li>
-                          <li>• Static analysis reports (Slither, Mythril)</li>
-                          <li>• Auditor notes and evidence files</li>
-                          <li>• Cryptographic signatures and timestamps</li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h4 className="font-semibold mb-2">Benefits:</h4>
-                        <ul className="space-y-1 text-muted-foreground">
-                          <li>• Permanent, tamper-proof storage</li>
-                          <li>• Decentralized - no single point of failure</li>
-                          <li>• Content-addressed - verifiable integrity</li>
-                          <li>• Linked to Result NFT via IPFS hash</li>
-                          <li>• Accessible for verification anytime</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
               </CardContent>
             </Card>
 
@@ -330,297 +197,12 @@ export default function HelpPage() {
             </div>
           </TabsContent>
 
-          {/* Architecture Tab */}
-          <TabsContent value="architecture" className="space-y-8">
-            <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-2xl">
-                  <Database className="w-8 h-8 text-primary" />
-                  System Architecture Overview
-                </CardTitle>
-                <CardDescription className="text-lg">
-                  Modern web3 stack with privacy-first design and comprehensive blockchain integration
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Network className="w-5 h-5 text-primary" />
-                      Technology Stack
-                    </h3>
-                    <ul className="space-y-2 text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Frontend:</strong> Next.js 14, React 18, TypeScript, Tailwind CSS</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Database:</strong> Supabase (PostgreSQL) with Row Level Security</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Blockchain:</strong> ApeChain testnet, Thirdweb SDK (client), Ethers.js</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Smart Contracts:</strong> Solidity, OpenZeppelin libraries</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Storage:</strong> IPFS via Thirdweb storage (no Pinata)</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>AI:</strong> OpenAI GPT-4 for intelligent analysis</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Shield className="w-5 h-5 text-accent" />
-                      Core Principles
-                    </h3>
-                    <ul className="space-y-2 text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Privacy-First:</strong> Complete anonymity for all participants</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Decentralized:</strong> Built on blockchain with IPFS storage</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Transparent:</strong> All interactions verifiable on-chain</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Scalable:</strong> Modern architecture supporting high throughput</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Secure:</strong> Multiple layers of security and verification</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="bg-primary/5 border-primary/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Database className="w-5 h-5 text-primary" />
-                    Database Layer
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <h4 className="font-semibold text-sm mb-1">Supabase PostgreSQL</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• Audit requests and metadata</li>
-                      <li>• Smart contract information</li>
-                      <li>• NFT and IPFS data tracking</li>
-                      <li>• Developer profiles and stats</li>
-                      <li>• Row Level Security (RLS)</li>
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-accent/5 border-accent/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Network className="w-5 h-5 text-accent" />
-                    Blockchain Layer
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <h4 className="font-semibold text-sm mb-1">ApeChain Integration</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• Audit Result NFT (ERC-721) minted on submission</li>
-                      <li>• Immutable audit records on ApeChain testnet</li>
-                      <li>• Cryptographic verification and explorer links</li>
-                      <li>• Thirdweb SDK integration (client-side mint)</li>
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-success/5 border-success/20">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Hexagon className="w-5 h-5 text-success" />
-                    Storage Layer
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <h4 className="font-semibold text-sm mb-1">IPFS Network</h4>
-                    <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• Audit reports and findings</li>
-                      <li>• NFT metadata storage</li>
-                      <li>• Repository snapshots</li>
-                      <li>• Verification proofs</li>
-                      <li>• Decentralized access</li>
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card className="bg-gradient-to-r from-accent/10 to-success/10 border-accent/20">
-                  <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-2xl">
-                  <Workflow className="w-8 h-8 text-accent" />
-                  API Architecture & Key Endpoints
-                </CardTitle>
-                <CardDescription className="text-lg">
-                  RESTful API design with comprehensive service layer integration
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Target className="w-5 h-5 text-accent" />
-                      Core API Endpoints
-                    </h3>
-                    <ul className="space-y-2 text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>POST /api/submit-audit:</strong> Create new audit request (Request NFT client-side)</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>GET /api/dashboard-supabase:</strong> Fetch dashboard data</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>POST /api/estimate-audit:</strong> AI-powered estimation</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>POST /api/accept-audit:</strong> Accept audit request (no NFT mint on accept)</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>POST /api/submit-audit-results:</strong> Save results + client-minted NFT data</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>GET /api/audit-results/[id]:</strong> Latest result by audit_request_id</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>POST /api/verify-audit:</strong> Verify by audit_request_id (uses ipfs_hash)</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-success" />
-                      Service Layer
-                    </h3>
-                    <ul className="space-y-2 text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>SupabaseAuditService:</strong> Database operations</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>ThirdwebContractService:</strong> Blockchain interactions</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>EnhancedGPTService:</strong> AI-powered analysis</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>StorageService:</strong> Thirdweb IPFS storage (no Pinata)</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-warning/10 to-primary/10 border-warning/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-3 text-2xl">
-                  <Shield className="w-8 h-8 text-warning" />
-                  Security Architecture
-                </CardTitle>
-                <CardDescription className="text-lg">
-                  Multi-layer security with privacy-preserving design
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Lock className="w-5 h-5 text-warning" />
-                      Privacy Protection
-                    </h3>
-                    <ul className="space-y-2 text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>AI Sanitization:</strong> Automatic code obfuscation</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Anonymization:</strong> No identity exposure</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>ZKP Verification:</strong> Cryptographic proofs</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>IPFS Encryption:</strong> Secure file storage</span>
-                      </li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                      <Eye className="w-5 h-5 text-primary" />
-                      Access Control
-                    </h3>
-                    <ul className="space-y-2 text-muted-foreground">
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Row Level Security:</strong> Database access control</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Wallet Authentication:</strong> Thirdweb integration</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Smart Contract Security:</strong> OpenZeppelin standards</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Rate Limiting:</strong> API protection</span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           {/* Workflow Tab */}
           <TabsContent value="workflow" className="space-y-8">
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">Complete ProofChain Workflow</CardTitle>
-                <CardDescription>
-                  Step-by-step process from contract upload to verified audit badge with NFT trail
-                </CardDescription>
+                <CardDescription>Step-by-step process from contract upload to verified audit badge</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-8">
@@ -641,9 +223,6 @@ export default function HelpPage() {
                             <p className="text-xs text-muted-foreground">
                               Submit smart contract with AI sanitization options
                             </p>
-                            <Badge variant="outline" className="mt-2 text-xs">
-                              Request NFT Minted
-                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -657,9 +236,6 @@ export default function HelpPage() {
                             <p className="text-xs text-muted-foreground">
                               Choose audit depth and number of auditors ($50-$110)
                             </p>
-                            <Badge variant="outline" className="mt-2 text-xs">
-                              Saved to Airtable
-                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -671,9 +247,6 @@ export default function HelpPage() {
                             </div>
                             <h4 className="font-semibold mb-1">Track Progress</h4>
                             <p className="text-xs text-muted-foreground">Monitor audit status through dashboard</p>
-                            <Badge variant="outline" className="mt-2 text-xs">
-                              Status: In Progress
-                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -685,9 +258,6 @@ export default function HelpPage() {
                             </div>
                             <h4 className="font-semibold mb-1">Receive Badge</h4>
                             <p className="text-xs text-muted-foreground">Get verified audit badge with ZKP</p>
-                            <Badge variant="outline" className="mt-2 text-xs">
-                              Result NFT + IPFS
-                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -711,9 +281,6 @@ export default function HelpPage() {
                             <p className="text-xs text-muted-foreground">
                               View anonymized contracts available for audit
                             </p>
-                            <Badge variant="outline" className="mt-2 text-xs">
-                              View Request NFTs
-                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -723,11 +290,10 @@ export default function HelpPage() {
                             <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center mx-auto mb-2">
                               <span className="text-accent-foreground font-bold text-sm">2</span>
                             </div>
-                            <h4 className="font-semibold mb-1">Accept Job</h4>
-                            <p className="text-xs text-muted-foreground">Accept audit and receive ownership NFT</p>
-                            <Badge variant="outline" className="mt-2 text-xs">
-                              Owner NFT Minted
-                            </Badge>
+                            <h4 className="font-semibold mb-1">Negotiate & Accept</h4>
+                            <p className="text-xs text-muted-foreground">
+                              AI-powered price negotiation and job acceptance
+                            </p>
                           </div>
                         </CardContent>
                       </Card>
@@ -741,9 +307,6 @@ export default function HelpPage() {
                             <p className="text-xs text-muted-foreground">
                               Review sanitized code for 13 vulnerability types
                             </p>
-                            <Badge variant="outline" className="mt-2 text-xs">
-                              Evidence Collected
-                            </Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -754,10 +317,7 @@ export default function HelpPage() {
                               <span className="text-success-foreground font-bold text-sm">4</span>
                             </div>
                             <h4 className="font-semibold mb-1">Submit Proof</h4>
-                            <p className="text-xs text-muted-foreground">Upload to IPFS and mint Result NFT</p>
-                            <Badge variant="outline" className="mt-2 text-xs">
-                              Client-side Mint
-                            </Badge>
+                            <p className="text-xs text-muted-foreground">Generate ZKP evidence and submit findings</p>
                           </div>
                         </CardContent>
                       </Card>
@@ -788,11 +348,11 @@ export default function HelpPage() {
                         <CardContent className="p-4">
                           <div className="text-center">
                             <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center mx-auto mb-2">
-                              <Database className="w-4 h-4 text-accent-foreground" />
+                              <Lock className="w-4 h-4 text-accent-foreground" />
                             </div>
-                            <h4 className="font-semibold mb-1">IPFS Storage</h4>
+                            <h4 className="font-semibold mb-1">ZKP Generation</h4>
                             <p className="text-xs text-muted-foreground">
-                              Decentralized evidence and audit data storage (ipfs_hash used for verification fetch)
+                              Cryptographic proof creation and verification
                             </p>
                           </div>
                         </CardContent>
@@ -804,9 +364,7 @@ export default function HelpPage() {
                               <Network className="w-4 h-4 text-success-foreground" />
                             </div>
                             <h4 className="font-semibold mb-1">Blockchain Anchoring</h4>
-                            <p className="text-xs text-muted-foreground">
-                              NFT minting and immutable record on ApeChain
-                            </p>
+                            <p className="text-xs text-muted-foreground">Immutable record storage on ApeChain</p>
                           </div>
                         </CardContent>
                       </Card>
