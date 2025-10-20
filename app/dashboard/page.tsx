@@ -7,6 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { useAuth } from "@/lib/auth-context"
 import {
   Clock,
   CheckCircle,
@@ -49,6 +52,9 @@ import {
   PieChart,
   LineChart,
   DollarSign,
+  Check,
+  X,
+  Hash,
 } from "lucide-react"
 import Link from "next/link"
 import { VerifyProofButton } from "@/components/verify-proof-button"
@@ -170,6 +176,61 @@ interface DashboardData {
   dataSource: string
 }
 
+interface VerificationData {
+  auditRequest: {
+    id: string
+    projectName: string
+    developerWallet: string
+    estimatedCompletionDate: string
+    status: string
+    createdAt: string
+  }
+  smartContracts: Array<{
+    id: string
+    contractAddress: string
+    contractType: string
+    contractName: string
+    contractSymbol: string
+    totalSupply?: number
+    decimals?: number
+    deploymentHash: string
+    explorerUrl: string
+  }>
+  auditor: {
+    name: string
+    wallet: string
+    acceptedAt: string
+  }
+  auditResult: {
+    id: string
+    auditRequestId: string
+    status: string
+    findingsCount: number
+    severityBreakdown: any
+    completionDate: string
+    evidenceFileHashes: string
+  }
+  nft: {
+    id: string
+    address: string
+    transactionHash: string
+    explorerUrl: string
+    metadataUri: string
+    ipfsHash: string | null
+    ipfsUrl: string | null
+  }
+  findings: any[]
+  ipfsData: any
+  ipfsError: string | null
+  verification: {
+    verified: boolean
+    verifiedAt: string
+    blockchainVerified: boolean
+    ipfsVerified: boolean
+    ipfsError: string | null
+  }
+}
+
 const getStatusColor = (status: string) => {
   switch (status) {
     case "completed":
@@ -215,15 +276,109 @@ const getComplexityColor = (complexity: string) => {
   }
 }
 
+// AddressDisplay component for copy/link functionality
+const AddressDisplay = ({ 
+  address, 
+  label, 
+  itemId, 
+  copiedItems, 
+  onCopy, 
+  explorerUrl 
+}: {
+  address: string
+  label: string
+  itemId: string
+  copiedItems: Set<string>
+  onCopy: (text: string, itemId: string) => void
+  explorerUrl?: string
+}) => {
+  // Validate address
+  const isValidAddress = address && address !== 'undefined' && address !== 'null' && address.trim() !== ''
+  
+  if (!isValidAddress) {
+    return (
+      <div>
+        <Label className="text-sm font-medium">{label}</Label>
+        <p className="text-sm text-muted-foreground">Not available</p>
+      </div>
+    )
+  }
+
+  // Clean IPFS addresses
+  const cleanAddress = address.startsWith('ipfs://') ? address.replace('ipfs://', '') : address
+
+  return (
+    <div>
+      <Label className="text-sm font-medium">{label}</Label>
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-mono flex-1 truncate">{cleanAddress}</p>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onCopy(cleanAddress, itemId)}
+          className="h-8 w-8 p-0"
+        >
+          {copiedItems.has(itemId) ? (
+            <Check className="w-4 h-4 text-green-500" />
+          ) : (
+            <Copy className="w-4 h-4" />
+          )}
+        </Button>
+        {explorerUrl && (
+          <Button
+            variant="ghost"
+            size="sm"
+            asChild
+            className="h-8 w-8 p-0"
+          >
+            <a 
+              href={explorerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function DashboardPage() {
+  const { user, isAuthenticated } = useAuth()
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [walletAddress, setWalletAddress] = useState("0x79769bdfC988EA6D0b7Abf9A6bFC6e830fAC3433")
+  const [walletAddress, setWalletAddress] = useState("")
   const [refreshing, setRefreshing] = useState(false)
+  
+  // Audit Report Dialog State
+  const [isAuditReportOpen, setIsAuditReportOpen] = useState(false)
+  const [selectedAuditReport, setSelectedAuditReport] = useState<VerificationData | null>(null)
+  const [loadingAuditReport, setLoadingAuditReport] = useState(false)
+  const [copiedItems, setCopiedItems] = useState<Set<string>>(new Set())
+
+  // Set initial wallet address based on authentication method
+  useEffect(() => {
+    if (user) {
+      if (user.authMethod === "email") {
+        // For email authentication, keep wallet address empty
+        setWalletAddress("")
+      } else if (user.authMethod === "wallet" && user.walletAddress) {
+        // For wallet authentication, use the connected wallet address
+        setWalletAddress(user.walletAddress)
+      } else if (user.authMethod === "both" && user.walletAddress) {
+        // For both methods, use the wallet address if available
+        setWalletAddress(user.walletAddress)
+      }
+    }
+  }, [user])
 
   useEffect(() => {
-    fetchDashboardData()
+    if (walletAddress) {
+      fetchDashboardData()
+    }
   }, [walletAddress])
 
   const fetchDashboardData = async () => {
@@ -261,8 +416,125 @@ export default function DashboardPage() {
     setRefreshing(false)
   }
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, itemId: string) => {
     navigator.clipboard.writeText(text)
+    setCopiedItems(prev => new Set(prev).add(itemId))
+    setTimeout(() => {
+      setCopiedItems(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(itemId)
+        return newSet
+      })
+    }, 2000)
+  }
+
+  const fetchAuditReport = async (auditRequestId: string) => {
+    setLoadingAuditReport(true)
+    try {
+      console.log('[Dashboard] Fetching audit report for ID:', auditRequestId)
+      
+      const response = await fetch('/api/verify-audit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ auditRequestId }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch audit report')
+      }
+
+      console.log('[Dashboard] Audit report fetched successfully:', data.data)
+      setSelectedAuditReport(data.data)
+      setIsAuditReportOpen(true)
+    } catch (error: any) {
+      console.error('[Dashboard] Error fetching audit report:', error)
+      alert("Failed to load audit report: " + error.message)
+    } finally {
+      setLoadingAuditReport(false)
+    }
+  }
+
+  // Show initial state for email users without wallet address
+  if (user?.authMethod === "email" && !walletAddress) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground mb-2">Developer Dashboard</h1>
+                <p className="text-muted-foreground">Comprehensive overview of your ProofChain activities</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Wallet Address Input */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Wallet className="w-5 h-5" />
+                Wallet Address
+              </CardTitle>
+              <CardDescription>
+                Enter a wallet address to view its comprehensive data and activities
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-3">
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    value={walletAddress}
+                    onChange={(e) => setWalletAddress(e.target.value)}
+                    placeholder="Enter wallet address (0x...)"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
+                  />
+                </div>
+                <Button 
+                  onClick={fetchDashboardData} 
+                  disabled={loading || !walletAddress} 
+                  className="px-6"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Search className="w-4 h-4 mr-2" />
+                      Load Data
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              {/* Authentication Method Indicator */}
+              {user && (
+                <div className="mt-3 flex items-center gap-2 text-sm">
+                  <span className="text-slate-600">Authentication:</span>
+                  <Badge variant="secondary">
+                    <User className="w-3 h-3 mr-1" />
+                    Email
+                  </Badge>
+                  <span className="text-slate-500 text-xs">
+                    (Enter any wallet address to view data)
+                  </span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="text-center py-12">
+            <Wallet className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-slate-700 mb-2">Enter a Wallet Address</h3>
+            <p className="text-slate-500">Please enter a wallet address above to view dashboard data and activities.</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
@@ -382,21 +654,31 @@ export default function DashboardPage() {
               Wallet Address
             </CardTitle>
             <CardDescription>
-              Enter a wallet address to view its comprehensive data and activities
+              {user?.authMethod === "email" 
+                ? "Enter a wallet address to view its comprehensive data and activities"
+                : user?.authMethod === "wallet" 
+                ? "View data for your connected wallet address"
+                : "Enter a wallet address to view its comprehensive data and activities"
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-3">
+            {/*<div className="flex gap-3">
               <div className="flex-1">
                 <input
                   type="text"
                   value={walletAddress}
                   onChange={(e) => setWalletAddress(e.target.value)}
-                  placeholder="0x..."
+                  placeholder={user?.authMethod === "email" ? "Enter wallet address (0x...)" : "0x..."}
                   className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm"
+                  disabled={user?.authMethod === "wallet" && !!user?.walletAddress}
                 />
               </div>
-              <Button onClick={fetchDashboardData} disabled={loading} className="px-6">
+              <Button 
+                onClick={fetchDashboardData} 
+                disabled={loading || !walletAddress} 
+                className="px-6"
+              >
                 {loading ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
@@ -406,19 +688,58 @@ export default function DashboardPage() {
                   </>
                 )}
               </Button>
-            </div>
-            <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
-              <span>Current wallet:</span>
-              <code className="bg-slate-100 px-2 py-1 rounded text-xs font-mono">{currentWallet}</code>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => copyToClipboard(currentWallet)}
-                className="h-6 w-6 p-0"
-              >
-                <Copy className="w-3 h-3" />
-              </Button>
-            </div>
+            </div>*/}
+            
+            {/* Authentication Method Indicator */}
+            {user && (
+              <div className="mt-3 flex items-center gap-2 text-sm">
+                <span className="text-slate-600">Authentication:</span>
+                <Badge variant={user.authMethod === "email" ? "secondary" : "default"}>
+                  {user.authMethod === "email" ? (
+                    <>
+                      <User className="w-3 h-3 mr-1" />
+                      Email
+                    </>
+                  ) : user.authMethod === "wallet" ? (
+                    <>
+                      <Wallet className="w-3 h-3 mr-1" />
+                      Wallet
+                    </>
+                  ) : (
+                    <>
+                      <User className="w-3 h-3 mr-1" />
+                      Email + Wallet
+                    </>
+                  )}
+                </Badge>
+                {user.authMethod === "email" && (
+                  <span className="text-slate-500 text-xs">
+                    (Enter any wallet address to view data)
+                  </span>
+                )}
+                {user.authMethod === "wallet" && user.walletAddress && (
+                  <span className="text-slate-500 text-xs">
+                    (Using your connected wallet)
+                  </span>
+                )}
+              </div>
+            )}
+            
+            {/* Current Wallet Display */}
+            {currentWallet && (
+              <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
+                <span>Current wallet:</span>
+                <code className="bg-slate-100 px-2 py-1 rounded text-xs font-mono">{currentWallet}</code>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(currentWallet, 'current-wallet')}
+                  className="h-6 w-6 p-0"
+                >
+                  <Copy className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -495,7 +816,7 @@ export default function DashboardPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => copyToClipboard(developerProfile.wallet_address)}
+                        onClick={() => copyToClipboard(developerProfile.wallet_address, 'dev-profile-wallet')}
                       >
                         <Copy className="w-4 h-4" />
                       </Button>
@@ -770,11 +1091,18 @@ export default function DashboardPage() {
                             <div className="flex flex-col gap-2 ml-4">
                               {project.status === "completed" && (
                                 <>
-                                  <Button variant="outline" size="sm" asChild>
-                                    <Link href={`/verification?hash=${project.ipfsEvidenceHash}`}>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    onClick={() => fetchAuditReport(project.id)}
+                                    disabled={loadingAuditReport}
+                                  >
+                                    {loadingAuditReport ? (
+                                      <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                                    ) : (
                                       <Eye className="w-4 h-4 mr-1" />
-                                      View Report
-                                    </Link>
+                                    )}
+                                    View Report
                                   </Button>
                                   <VerifyProofButton
                                     hash={project.ipfsEvidenceHash}
@@ -792,7 +1120,7 @@ export default function DashboardPage() {
                                   </Link>
                                 </Button>
                               )}
-                              {project.status === "available" && (
+                              {project.status?.toLowerCase() === "available" && (
                                 <Button variant="outline" size="sm" disabled>
                                   <AlertTriangle className="w-4 h-4 mr-1" />
                                   Pending Assignment
@@ -889,7 +1217,7 @@ export default function DashboardPage() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => copyToClipboard(contract.contract_address)}
+                                      onClick={() => copyToClipboard(contract.contract_address, `contract-${contract.id}`)}
                                       className="h-6 w-6 p-0"
                                     >
                                       <Copy className="w-3 h-3" />
@@ -974,13 +1302,13 @@ export default function DashboardPage() {
                               <div>
                                 <span className="font-medium text-slate-600">Owner:</span>
                                 <div className="flex items-center gap-2 mt-1">
-                                  <code className="bg-slate-100 px-2 py-1 rounded text-xs font-mono">
+                                  <code className="bg-slate-45 px-2 py-1 rounded text-xs font-mono">
                                     {nft.owner_wallet.substring(0, 10)}...
                                   </code>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => copyToClipboard(nft.owner_wallet)}
+                                    onClick={() => copyToClipboard(nft.owner_wallet, `nft-owner-${nft.id}`)}
                                     className="h-6 w-6 p-0"
                                   >
                                     <Copy className="w-3 h-3" />
@@ -1046,7 +1374,7 @@ export default function DashboardPage() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <h3 className="text-lg font-semibold text-slate-900">{ipfs.content_type}</h3>
+                                <h3 className="text-lg font-semibold text-slate-5">{ipfs.content_type}</h3>
                                 <Badge variant="outline">{ipfs.content_type}</Badge>
                               </div>
                               
@@ -1054,13 +1382,13 @@ export default function DashboardPage() {
                                 <div>
                                   <span className="font-medium text-slate-600">IPFS Hash:</span>
                                   <div className="flex items-center gap-2 mt-1">
-                                    <code className="bg-slate-100 px-2 py-1 rounded text-xs font-mono">
+                                    <code className="bg-slate-45 px-2 py-1 rounded text-xs font-mono">
                                       {ipfs.ipfs_hash}
                                     </code>
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => copyToClipboard(ipfs.ipfs_hash)}
+                                      onClick={() => copyToClipboard(ipfs.ipfs_hash, `ipfs-hash-${ipfs.id}`)}
                                       className="h-6 w-6 p-0"
                                     >
                                       <Copy className="w-3 h-3" />
@@ -1191,6 +1519,414 @@ export default function DashboardPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Audit Report Dialog */}
+      <Dialog open={isAuditReportOpen} onOpenChange={setIsAuditReportOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Audit Report
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedAuditReport && (
+            <div className="space-y-6">
+              {/* Project Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building className="w-5 h-5" />
+                    Project Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Project Name</Label>
+                      <p className="text-sm font-semibold">{selectedAuditReport.auditRequest.projectName}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Status</Label>
+                      <Badge className={getStatusColor(selectedAuditReport.auditRequest.status)}>
+                        {getStatusIcon(selectedAuditReport.auditRequest.status)}
+                        <span className="ml-1 capitalize">{selectedAuditReport.auditRequest.status.replace("-", " ")}</span>
+                      </Badge>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Created Date</Label>
+                      <p className="text-sm">{new Date(selectedAuditReport.auditRequest.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Estimated Completion</Label>
+                      <p className="text-sm">{new Date(selectedAuditReport.auditRequest.estimatedCompletionDate).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  
+                  <AddressDisplay
+                    address={selectedAuditReport.auditRequest.developerWallet}
+                    label="Developer Wallet"
+                    itemId="developer-wallet"
+                    copiedItems={copiedItems}
+                    onCopy={copyToClipboard}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Smart Contracts */}
+              {selectedAuditReport.smartContracts && selectedAuditReport.smartContracts.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <FileCode className="w-5 h-5" />
+                      Smart Contracts
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {selectedAuditReport.smartContracts.map((contract, index) => (
+                      <div key={contract.id || index} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center gap-3">
+                          <h4 className="font-semibold">{contract.contractName}</h4>
+                          <Badge variant="outline">{contract.contractType}</Badge>
+                          {contract.contractSymbol && (
+                            <Badge variant="secondary">{contract.contractSymbol}</Badge>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <AddressDisplay
+                            address={contract.contractAddress}
+                            label="Contract Address"
+                            itemId={`contract-address-${index}`}
+                            copiedItems={copiedItems}
+                            onCopy={copyToClipboard}
+                            explorerUrl={contract.explorerUrl}
+                          />
+                          
+                          <AddressDisplay
+                            address={contract.deploymentHash}
+                            label="Deployment Hash"
+                            itemId={`deployment-hash-${index}`}
+                            copiedItems={copiedItems}
+                            onCopy={copyToClipboard}
+                          />
+                          
+                          {contract.totalSupply && (
+                            <div>
+                              <Label className="text-sm font-medium">Total Supply</Label>
+                              <p className="text-sm font-mono">{contract.totalSupply.toLocaleString()}</p>
+                            </div>
+                          )}
+                          
+                          {contract.decimals && (
+                            <div>
+                              <Label className="text-sm font-medium">Decimals</Label>
+                              <p className="text-sm">{contract.decimals}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Auditor Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Auditor Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Auditor Name</Label>
+                      <p className="text-sm font-semibold">{selectedAuditReport.auditor.name}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Accepted Date</Label>
+                      <p className="text-sm">{new Date(selectedAuditReport.auditor.acceptedAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  
+                  <AddressDisplay
+                    address={selectedAuditReport.auditor.wallet}
+                    label="Auditor Wallet"
+                    itemId="auditor-wallet"
+                    copiedItems={copiedItems}
+                    onCopy={copyToClipboard}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Audit Results */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5" />
+                    Audit Results
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Findings Count</Label>
+                      <p className="text-2xl font-bold">{selectedAuditReport.auditResult.findingsCount}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Completion Date</Label>
+                      <p className="text-sm">{new Date(selectedAuditReport.auditResult.completionDate).toLocaleDateString()}</p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Status</Label>
+                      <Badge className={getStatusColor(selectedAuditReport.auditResult.status)}>
+                        {getStatusIcon(selectedAuditReport.auditResult.status)}
+                        <span className="ml-1 capitalize">{selectedAuditReport.auditResult.status}</span>
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  {selectedAuditReport.auditResult.severityBreakdown && (
+                    <div>
+                      <Label className="text-sm font-medium">Severity Breakdown</Label>
+                      <div className="flex gap-2 mt-2">
+                        {selectedAuditReport.auditResult.severityBreakdown.critical > 0 && (
+                          <Badge variant="destructive">
+                            {selectedAuditReport.auditResult.severityBreakdown.critical} Critical
+                          </Badge>
+                        )}
+                        {selectedAuditReport.auditResult.severityBreakdown.high > 0 && (
+                          <Badge className="bg-orange-100 text-orange-800">
+                            {selectedAuditReport.auditResult.severityBreakdown.high} High
+                          </Badge>
+                        )}
+                        {selectedAuditReport.auditResult.severityBreakdown.medium > 0 && (
+                          <Badge className="bg-yellow-100 text-yellow-800">
+                            {selectedAuditReport.auditResult.severityBreakdown.medium} Medium
+                          </Badge>
+                        )}
+                        {selectedAuditReport.auditResult.severityBreakdown.low > 0 && (
+                          <Badge variant="secondary">
+                            {selectedAuditReport.auditResult.severityBreakdown.low} Low
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Audit Result NFT */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Image className="w-5 h-5" />
+                    Audit Result NFT
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="text-sm font-medium">Token ID</Label>
+                      <p className="text-sm font-mono">
+                        {selectedAuditReport.nft.id ? `#${selectedAuditReport.nft.id}` : "Not available"}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium">Status</Label>
+                      <div className="flex items-center gap-2">
+                        {selectedAuditReport.verification.blockchainVerified ? (
+                          <Check className="w-4 h-4 text-green-500" />
+                        ) : (
+                          <X className="w-4 h-4 text-red-500" />
+                        )}
+                        <span className="text-sm">
+                          {selectedAuditReport.verification.blockchainVerified ? "Blockchain Verified" : "Not Verified"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <AddressDisplay
+                    address={selectedAuditReport.nft.address}
+                    label="NFT Contract Address"
+                    itemId="nft-address"
+                    copiedItems={copiedItems}
+                    onCopy={copyToClipboard}
+                  />
+                  
+                  <AddressDisplay
+                    address={selectedAuditReport.nft.transactionHash}
+                    label="Transaction Hash"
+                    itemId="nft-transaction"
+                    copiedItems={copiedItems}
+                    onCopy={copyToClipboard}
+                    explorerUrl={selectedAuditReport.nft.explorerUrl}
+                  />
+                  
+                  <AddressDisplay
+                    address={selectedAuditReport.nft.ipfsHash || selectedAuditReport.nft.metadataUri}
+                    label="IPFS Hash"
+                    itemId="ipfs-hash"
+                    copiedItems={copiedItems}
+                    onCopy={copyToClipboard}
+                    explorerUrl={selectedAuditReport.nft.ipfsUrl || undefined}
+                  />
+                </CardContent>
+              </Card>
+
+              {/* IPFS Audit Data */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Database className="w-5 h-5" />
+                    IPFS Audit Data
+                    <div className="flex items-center gap-2 ml-auto">
+                      {selectedAuditReport.verification.ipfsVerified ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <X className="w-4 h-4 text-red-500" />
+                      )}
+                      <span className="text-sm">
+                        {selectedAuditReport.verification.ipfsVerified ? "IPFS Verified" : "IPFS Error"}
+                      </span>
+                      {selectedAuditReport.verification.ipfsError && (
+                        <span className="text-sm text-red-500">({selectedAuditReport.verification.ipfsError})</span>
+                      )}
+                    </div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedAuditReport.ipfsData ? (
+                    <div className="space-y-4">
+                      <div>
+                        <Label className="text-sm font-medium">IPFS Content Preview</Label>
+                        <div className="bg-muted/50 p-4 rounded-lg max-h-40 overflow-y-auto">
+                          <pre className="text-xs whitespace-pre-wrap">
+                            {JSON.stringify(selectedAuditReport.ipfsData, null, 2)}
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <Database className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-foreground mb-2">IPFS Data Not Available</h3>
+                      <p className="text-muted-foreground mb-4">
+                        {selectedAuditReport.verification.ipfsError || "No IPFS data found for this audit"}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Audit Findings */}
+              {selectedAuditReport.findings && selectedAuditReport.findings.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5" />
+                      Audit Findings ({selectedAuditReport.findings.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {selectedAuditReport.findings.map((finding: any, index: number) => (
+                      <div key={finding.id || index} className="border rounded-lg p-4 space-y-3">
+                        <div className="flex items-center gap-3">
+                          <h4 className="font-semibold">{finding.title || `Finding ${index + 1}`}</h4>
+                          <Badge className={getComplexityColor(finding.severity || finding.finding_category)}>
+                            {finding.severity || finding.finding_category}
+                          </Badge>
+                        </div>
+                        
+                        {finding.description && (
+                          <p className="text-sm text-muted-foreground">{finding.description}</p>
+                        )}
+                        
+                        {finding.recommendation && (
+                          <div>
+                            <Label className="text-sm font-medium">Recommendation</Label>
+                            <p className="text-sm">{finding.recommendation}</p>
+                          </div>
+                        )}
+                        
+                        {finding.external_references && (
+                          <div>
+                            <Label className="text-sm font-medium">References</Label>
+                            <p className="text-sm font-mono text-xs">{finding.external_references}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Verification Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="w-5 h-5" />
+                    Verification Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        {selectedAuditReport.verification.verified ? (
+                          <Check className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <X className="w-5 h-5 text-red-500" />
+                        )}
+                        <span className="font-semibold">Overall Verified</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedAuditReport.verification.verified ? "Verified" : "Not Verified"}
+                      </p>
+                    </div>
+                    
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        {selectedAuditReport.verification.blockchainVerified ? (
+                          <Check className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <X className="w-5 h-5 text-red-500" />
+                        )}
+                        <span className="font-semibold">Blockchain Verified</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedAuditReport.verification.blockchainVerified ? "Verified" : "Not Verified"}
+                      </p>
+                    </div>
+                    
+                    <div className="text-center p-4 bg-muted/50 rounded-lg">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        {selectedAuditReport.verification.ipfsVerified ? (
+                          <Check className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <X className="w-5 h-5 text-red-500" />
+                        )}
+                        <span className="font-semibold">IPFS Verified</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedAuditReport.verification.ipfsVerified ? "Verified" : "Not Verified"}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 pt-4 border-t">
+                    <Label className="text-sm font-medium">Verified At</Label>
+                    <p className="text-sm">{new Date(selectedAuditReport.verification.verifiedAt).toLocaleString()}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

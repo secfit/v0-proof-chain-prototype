@@ -1,9 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getContract } from "thirdweb"
 import { defineChain } from "thirdweb/chains"
-import { client } from "@/lib/client"
+import { client } from "@/lib/thirdweb-config"
 
-export const dynamic = "force-dynamic"
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 // ApeChain testnet configuration
 const apechainTestnet = defineChain({

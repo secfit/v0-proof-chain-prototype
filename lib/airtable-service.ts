@@ -479,7 +479,9 @@ export function generateProjectTags(repoAnalysis: any, aiEstimation: any): strin
   const tags: string[] = []
 
   // Add complexity tag
-  tags.push(`complexity-${aiEstimation.complexity.toLowerCase()}`)
+  if (aiEstimation?.complexity) {
+    tags.push(`complexity-${aiEstimation.complexity.toLowerCase()}`)
+  }
 
   // Add file count tags
   if (repoAnalysis.solidityFiles > 10) {
@@ -498,17 +500,19 @@ export function generateProjectTags(repoAnalysis: any, aiEstimation: any): strin
   }
 
   // Add risk-based tags
-  if (aiEstimation.riskFactors && aiEstimation.riskFactors.length > 0) {
+  if (aiEstimation?.riskFactors && aiEstimation.riskFactors.length > 0) {
     tags.push("high-risk")
   }
 
   // Add duration tags
-  if (aiEstimation.durationDays > 14) {
-    tags.push("long-term")
-  } else if (aiEstimation.durationDays > 7) {
-    tags.push("medium-term")
-  } else {
-    tags.push("short-term")
+  if (aiEstimation?.durationDays) {
+    if (aiEstimation.durationDays > 14) {
+      tags.push("long-term")
+    } else if (aiEstimation.durationDays > 7) {
+      tags.push("medium-term")
+    } else {
+      tags.push("short-term")
+    }
   }
 
   return tags

@@ -205,7 +205,8 @@ export async function deployRealNFTContract(
 export async function mintRealNFT(
   nftContractAddress: string,
   metadataUri: string,
-  developerWallet: string
+  developerWallet: string,
+  mintingAccountPrivateKey?: string
 ): Promise<{ tokenId: string; transactionHash: string; metadataUri: string; explorerUrl: string }> {
   try {
     console.log("🎯 Minting REAL NFT using deployed contract...");
@@ -214,12 +215,18 @@ export async function mintRealNFT(
       nftContractAddress,
       developerWallet,
       metadataUri,
-      chainId: apechainTestnet.id
+      chainId: apechainTestnet.id,
+      hasCustomPrivateKey: !!mintingAccountPrivateKey
     });
     
     // Validate contract address format
     if (!nftContractAddress || !nftContractAddress.startsWith('0x') || nftContractAddress.length !== 42) {
       throw new Error(`Invalid contract address: ${nftContractAddress}`);
+    }
+    
+    // Validate developer wallet address format
+    if (!developerWallet || !developerWallet.startsWith('0x') || developerWallet.length !== 42) {
+      throw new Error(`Invalid developer wallet address: ${developerWallet}`);
     }
     
     // Get the NFT contract with real ABI
@@ -230,6 +237,36 @@ export async function mintRealNFT(
       abi: AuditRequestNFTArtifact.abi,
     });
     
+    // Determine which account to use for minting
+    let mintingAccount;
+    
+    if (mintingAccountPrivateKey) {
+      // Use provided private key for minting
+      console.log("🔑 Using provided private key for minting account");
+      mintingAccount = privateKeyToAccount({
+        client,
+        privateKey: mintingAccountPrivateKey,
+      });
+    } else {
+      // Use the default account (derived from configured private key)
+      console.log("🔑 Using default configured account for minting");
+      mintingAccount = account;
+    }
+    
+    console.log("📝 Minting account details:", {
+      address: mintingAccount.address,
+      isOwner: mintingAccount.address.toLowerCase() === developerWallet.toLowerCase()
+    });
+    
+    // Check if the minting account is the same as the developer wallet (contract owner)
+    if (mintingAccount.address.toLowerCase() !== developerWallet.toLowerCase()) {
+      console.warn("⚠️  Warning: Minting account is different from developer wallet (contract owner)");
+      console.warn(`   Minting Account: ${mintingAccount.address}`);
+      console.warn(`   Developer Wallet (Contract Owner): ${developerWallet}`);
+      console.warn("   This will likely cause 'OwnableUnauthorizedAccount' error");
+      console.warn("   Solution: Either use the same account for both, or provide the correct private key");
+    }
+    
     // Prepare the mint transaction using real ABI
     const mintTransaction = prepareContractCall({
       contract: nftContract,
@@ -237,10 +274,10 @@ export async function mintRealNFT(
       params: [developerWallet, metadataUri],
     });
     
-    // Send and confirm the transaction
+    // Send and confirm the transaction using the determined account
     const receipt = await sendAndConfirmTransaction({
       transaction: mintTransaction,
-      account,
+      account: mintingAccount,
     });
     
     // Extract token ID from transaction logs
@@ -250,6 +287,8 @@ export async function mintRealNFT(
     console.log("✅ REAL NFT minted successfully!");
     console.log("   Token ID:", tokenId);
     console.log("   Transaction Hash:", receipt.transactionHash);
+    console.log("   Minted by:", mintingAccount.address);
+    console.log("   Minted to:", developerWallet);
     
     return {
       tokenId: tokenId,
@@ -259,6 +298,10 @@ export async function mintRealNFT(
     };
   } catch (error) {
     console.error("❌ Error minting REAL NFT:", error);
+    console.error("💡 Troubleshooting tips:");
+    console.error("   1. Ensure the minting account is the contract owner");
+    console.error("   2. Check that the contract was deployed with the correct owner");
+    console.error("   3. Verify the private key corresponds to the contract owner address");
     throw error;
   }
 }
@@ -298,6 +341,46 @@ export async function createRealAuditRequestContracts(
     };
   } catch (error: any) {
     console.error("❌ Error creating REAL contracts:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Helper function to create contracts and mint NFT with specific private key
+export async function createRealAuditRequestContractsWithPrivateKey(
+  data: AuditRequestData,
+  mintingPrivateKey: string
+): Promise<ContractCreationResult> {
+  try {
+    console.log("🚀 Starting REAL contract creation with specific private key...");
+    console.log("Project:", data.projectName);
+    console.log("Developer:", data.developerWallet);
+
+    // 1. Upload metadata to IPFS
+    console.log("\n📝 Step 1: Uploading metadata to IPFS...");
+    const metadataUri = await uploadMetadataToIPFS(data);
+
+    // 2. Deploy REAL ERC20 token contract
+    console.log("\n💰 Step 2: Deploying REAL ERC20 token contract...");
+    const tokenContract = await deployRealTokenContract(data.projectName, data.developerWallet);
+
+    // 3. Deploy REAL ERC721 NFT contract
+    console.log("\n🎨 Step 3: Deploying REAL ERC721 NFT contract...");
+    const nftContract = await deployRealNFTContract(data.projectName, data.developerWallet);
+
+    // 4. Mint REAL NFT with specific private key
+    console.log("\n🎯 Step 4: Minting REAL NFT with specific private key...");
+    const nftMintResult = await mintRealNFT(nftContract.address, metadataUri, data.developerWallet, mintingPrivateKey);
+
+    console.log("\n🎉 REAL contract creation and NFT minting process completed!");
+
+    return {
+      success: true,
+      tokenContract,
+      nftContract,
+      nftMintResult,
+    };
+  } catch (error: any) {
+    console.error("❌ Error creating REAL contracts with private key:", error);
     return { success: false, error: error.message };
   }
 }

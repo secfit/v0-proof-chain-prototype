@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Shield, Mail, Wallet, ArrowRight, Loader2 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { ConnectButton, useActiveAccount } from "thirdweb/react"
-import { client } from "@/lib/client"
+import { client } from "@/lib/thirdweb-config"
 
 export function LoginForm() {
   const router = useRouter()

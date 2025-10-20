@@ -287,7 +287,9 @@ export async function listTransactions(filter?: string): Promise<Transaction[]> 
 export function generateProjectTags(repoAnalysis: any, aiEstimation: any): string[] {
   const tags: string[] = []
 
-  tags.push(`complexity-${aiEstimation.complexity.toLowerCase()}`)
+  if (aiEstimation?.complexity) {
+    tags.push(`complexity-${aiEstimation.complexity.toLowerCase()}`)
+  }
 
   if (repoAnalysis.solidityFiles > 10) {
     tags.push("large-codebase")
@@ -303,16 +305,18 @@ export function generateProjectTags(repoAnalysis: any, aiEstimation: any): strin
     tags.push("moderate-code")
   }
 
-  if (aiEstimation.riskFactors && aiEstimation.riskFactors.length > 0) {
+  if (aiEstimation?.riskFactors && aiEstimation.riskFactors.length > 0) {
     tags.push("high-risk")
   }
 
-  if (aiEstimation.durationDays > 14) {
-    tags.push("long-term")
-  } else if (aiEstimation.durationDays > 7) {
-    tags.push("medium-term")
-  } else {
-    tags.push("short-term")
+  if (aiEstimation?.durationDays) {
+    if (aiEstimation.durationDays > 14) {
+      tags.push("long-term")
+    } else if (aiEstimation.durationDays > 7) {
+      tags.push("medium-term")
+    } else {
+      tags.push("short-term")
+    }
   }
 
   return tags

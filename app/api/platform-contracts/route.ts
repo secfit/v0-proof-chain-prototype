@@ -1,10 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getContract } from "thirdweb"
 import { defineChain } from "thirdweb/chains"
-import { client } from "@/lib/client"
-import { getPlatformContractDetails } from "@/lib/platform-contract-service"
+import { client } from "@/lib/thirdweb-config"
+import { getContractDetails } from "@/lib/platform-contract-service"
 
-export const dynamic = "force-dynamic"
+// Force dynamic rendering
+export const dynamic = 'force-dynamic'
 
 // ApeChain testnet configuration
 const apechainTestnet = defineChain({
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     console.log("[v0] Platform contracts API called with wallet:", walletAddress, "type:", contractType)
 
-    const platformDetails = getPlatformContractDetails()
+    const platformDetails = getContractDetails()
     
     if (!platformDetails.auditRequestsContract || !platformDetails.developersContract) {
       return NextResponse.json({ 

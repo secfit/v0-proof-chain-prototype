@@ -2,7 +2,11 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useActiveAccount, ConnectButton, useActiveWallet } from "thirdweb/react"
+import { client } from "@/lib/thirdweb-config"
+import { createAuditResultNFTClient, type AuditResultData } from "@/lib/audit-result-nft-service"
+import { WalletDebug } from "@/components/wallet-debug"
 import { Navigation } from "@/components/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -31,25 +35,36 @@ import {
   ExternalLink,
 } from "lucide-react"
 
-// Mock job data - completely anonymized
-const jobData = {
-  id: "2",
-  contractHash: "0x5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x",
-  status: "in-progress",
-  auditPackage: "Standard",
-  deadline: "2024-01-28",
-  timeRemaining: "3 days, 14 hours",
-  negotiatedPrice: 85,
-  originalPrice: 75,
-  estimatedHours: 20,
-  completedHours: 13,
-  contractType: "NFT Marketplace",
-  linesOfCode: 1200,
-  complexity: "Medium",
-  specializations: ["NFT", "Marketplace", "Royalties"],
-  sanitized: true,
-  obfuscated: true,
-  files: ["Contract_A.sol", "Contract_B.sol", "Contract_C.sol", "Contract_D.sol"],
+// Interface for audit data
+interface AuditData {
+  id: string
+  contractHash: string
+  status: string
+  auditPackage: string
+  deadline: string
+  timeRemaining?: string
+  negotiatedPrice?: number
+  originalPrice?: number
+  estimatedHours?: number
+  completedHours?: number
+  contractType: string
+  linesOfCode: number
+  complexity: string
+  specializations: string[]
+  sanitized: boolean
+  obfuscated: boolean
+  files?: string[]
+  projectName: string
+  projectDescription?: string
+  githubUrl?: string
+  startDate?: string
+  estimatedCompletionDate?: string
+  auditorName?: string
+  auditorWallet?: string
+  progress?: number
+  developerWallet?: string
+  repositoryHash?: string
+  requestNftId?: string
 }
 
 const vulnerabilityCategories = [
@@ -99,6 +114,46 @@ const findings = [
 ]
 
 export default function AuditorJobPage({ params }: { params: { id: string } }) {
+  const account = useActiveAccount()
+  const wallet = useActiveWallet()
+  
+  // Debug wallet connection
+  console.log("[Auditor Job] Account:", account)
+  console.log("[Auditor Job] Account Address:", account?.address)
+  console.log("[Auditor Job] Account Type:", typeof account)
+  console.log("[Auditor Job] Account Keys:", account ? Object.keys(account) : "No account")
+  console.log("[Auditor Job] Wallet:", wallet)
+  console.log("[Auditor Job] Wallet Address:", wallet?.getAccount()?.address)
+  
+  // Create a robust account detection function
+  const getConnectedAccount = () => {
+    // Try multiple methods to get the connected account
+    if (account?.address) {
+      return account
+    }
+    
+    if (wallet?.getAccount()?.address) {
+      return wallet.getAccount()
+    }
+    
+    return null
+  }
+
+  const connectedAccount = getConnectedAccount()
+  
+  // Monitor account changes
+  useEffect(() => {
+    console.log("[Auditor Job] Account changed:", {
+      account: account,
+      address: account?.address,
+      wallet: wallet,
+      walletAddress: wallet?.getAccount()?.address,
+      connectedAccount: connectedAccount,
+      isConnected: !!connectedAccount,
+      timestamp: new Date().toISOString()
+    })
+  }, [account, wallet, connectedAccount])
+  
   const [activeTab, setActiveTab] = useState("overview")
   const [auditNotes, setAuditNotes] = useState("")
   const [selectedVulnerabilities, setSelectedVulnerabilities] = useState(vulnerabilityCategories)
@@ -111,6 +166,8 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
     line: "",
     category: "other",
   })
+  const [isAddingFinding, setIsAddingFinding] = useState(false)
+  const [findings, setFindings] = useState<any[]>([])
 
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -119,9 +176,195 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
   const [nftConfirmation, setNftConfirmation] = useState<any>(null)
   const [evidenceFiles, setEvidenceFiles] = useState<File[]>([])
 
+  // State for audit data
+  const [jobData, setJobData] = useState<AuditData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
   const completedChecks = auditChecks.filter((check) => check.status === "completed").length
   const totalChecks = auditChecks.length
   const progressPercentage = (completedChecks / totalChecks) * 100
+
+  // Function to save finding to database
+  const handleAddFinding = async () => {
+    if (!jobData || !newFinding.title || !newFinding.description) {
+      alert("Please fill in the title and description")
+      return
+    }
+
+    setIsAddingFinding(true)
+    try {
+      const requestData = {
+        auditRequestId: jobData.id,
+        auditorWallet: jobData.auditorWallet,
+        auditorName: jobData.auditorName,
+        title: newFinding.title,
+        description: newFinding.description,
+        severity: newFinding.severity,
+        finding_category: newFinding.category,
+        fileName: newFinding.file,
+        lineNumber: newFinding.line ? parseInt(newFinding.line) : null,
+      }
+      
+      console.log("[Frontend] Sending finding data:", requestData)
+      
+      const response = await fetch('/api/audit-findings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      })
+
+      const result = await response.json()
+      console.log("[Frontend] API Response:", result)
+
+      if (result.success) {
+        // Reset form
+        setNewFinding({
+          severity: "medium",
+          title: "",
+          description: "",
+          file: "",
+          line: "",
+          category: "other",
+        })
+        
+        // Refresh findings list
+        await fetchFindings()
+        
+        alert("Finding added successfully!")
+      } else {
+        console.error("Error adding finding:", result.error)
+        alert("Failed to add finding: " + result.error)
+      }
+    } catch (error) {
+      console.error("Error adding finding:", error)
+      alert("Failed to add finding")
+    } finally {
+      setIsAddingFinding(false)
+    }
+  }
+
+  // Function to fetch existing findings
+  const fetchFindings = async () => {
+    if (!jobData) return
+
+    try {
+      const response = await fetch(`/api/audit-findings?auditRequestId=${jobData.id}&auditorWallet=${jobData.auditorWallet}`)
+      const result = await response.json()
+
+      if (result.success) {
+        setFindings(result.data)
+        console.log("Fetched findings:", result.data)
+      }
+    } catch (error) {
+      console.error("Error fetching findings:", error)
+    }
+  }
+
+  // Countdown timer hook
+  const useCountdown = (targetDate: string) => {
+    const [timeLeft, setTimeLeft] = useState<{
+      days: number
+      hours: number
+      minutes: number
+      seconds: number
+      isExpired: boolean
+    }>({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: false })
+
+    useEffect(() => {
+      const calculateTimeLeft = () => {
+        const now = new Date().getTime()
+        const target = new Date(targetDate).getTime()
+        const difference = target - now
+
+        if (difference > 0) {
+          const days = Math.floor(difference / (1000 * 60 * 60 * 24))
+          const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+          const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+          const seconds = Math.floor((difference % (1000 * 60)) / 1000)
+
+          setTimeLeft({ days, hours, minutes, seconds, isExpired: false })
+        } else {
+          setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true })
+        }
+      }
+
+      calculateTimeLeft()
+      const timer = setInterval(calculateTimeLeft, 1000)
+
+      return () => clearInterval(timer)
+    }, [targetDate])
+
+    return timeLeft
+  }
+
+  // Countdown Timer Component
+  const CountdownTimer = ({ targetDate }: { targetDate: string }) => {
+    const timeLeft = useCountdown(targetDate)
+
+    if (timeLeft.isExpired) {
+      return (
+        <div className="flex items-center space-x-2 text-destructive">
+          <AlertTriangle className="w-4 h-4" />
+          <span className="text-sm font-medium">Deadline Expired</span>
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex items-center space-x-2 text-warning">
+        <Timer className="w-4 h-4" />
+        <span className="text-sm font-medium">
+          {timeLeft.days > 0 && `${timeLeft.days}d `}
+          {timeLeft.hours > 0 && `${timeLeft.hours}h `}
+          {timeLeft.minutes > 0 && `${timeLeft.minutes}m `}
+          {timeLeft.seconds}s remaining
+        </span>
+      </div>
+    )
+  }
+
+  // Fetch audit data
+  useEffect(() => {
+    fetchAuditData()
+  }, [params.id])
+
+  // Fetch findings when jobData is available
+  useEffect(() => {
+    if (jobData) {
+      fetchFindings()
+    }
+  }, [jobData])
+
+  const fetchAuditData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      console.log("[Auditor Job] Fetching audit data for ID:", params.id)
+      
+      const response = await fetch(`/api/audits/${params.id}`)
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to fetch audit data")
+      }
+
+      if (result.success && result.data) {
+        setJobData(result.data)
+        console.log("[Auditor Job] Audit data loaded:", result.data)
+      } else {
+        throw new Error(result.error || "Failed to load audit data")
+      }
+    } catch (err: any) {
+      console.error("[Auditor Job] Error fetching audit data:", err)
+      setError(err.message || "Failed to load audit data")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleVulnerabilityChange = (id: string, checked: boolean) => {
     setSelectedVulnerabilities((prev) => prev.map((vuln) => (vuln.id === id ? { ...vuln, checked } : vuln)))
@@ -134,6 +377,33 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
   }
 
   const handleSubmitResults = async () => {
+    console.log("[Auditor Job] Wallet connection check:", {
+      account: account,
+      address: account?.address,
+      wallet: wallet,
+      walletAddress: wallet?.getAccount()?.address,
+      connectedAccount: connectedAccount,
+      isConnected: !!connectedAccount,
+      jobDataAuditorWallet: jobData?.auditorWallet,
+      accountType: typeof account,
+      accountKeys: account ? Object.keys(account) : "No account"
+    })
+    
+    // Enhanced wallet connection check with debugging
+    if (!connectedAccount) {
+      console.error("[Auditor Job] No connected account found")
+      alert("Wallet not connected. Please connect your wallet using the Connect Wallet button.")
+      return
+    }
+    
+    if (!connectedAccount.address) {
+      console.error("[Auditor Job] Connected account exists but no address:", connectedAccount)
+      alert("Wallet connected but no address found. Please try reconnecting your wallet.")
+      return
+    }
+    
+    console.log("[Auditor Job] Wallet connection verified:", connectedAccount.address)
+
     setIsSubmitting(true)
     setUploadProgress(0)
 
@@ -142,12 +412,57 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
       setUploadProgress(10)
       await new Promise((resolve) => setTimeout(resolve, 500))
 
-      // Upload to IPFS
-      setUploadProgress(30)
-      await new Promise((resolve) => setTimeout(resolve, 500))
+      // Prepare audit result data for client-side minting (same pattern as upload page)
+      const auditResultData: AuditResultData = {
+        // Audit Request Information
+        auditRequestId: jobData?.id || "",
+        projectName: jobData?.projectName || "",
+        projectDescription: jobData?.projectDescription || "",
+        complexity: jobData?.complexity || "medium",
+        estimatedDuration: (jobData?.estimatedHours || 0).toString(),
+        proposedPrice: jobData?.negotiatedPrice || 0,
+        developerWallet: jobData?.developerWallet || "",
+        githubUrl: jobData?.githubUrl || "",
+        repositoryHash: jobData?.repositoryHash || "",
+        requestNftId: jobData?.requestNftId,
+        
+        // Auditor Information
+        auditorWallet: connectedAccount.address,
+        auditorName: jobData?.auditorName || "",
+        acceptedPrice: jobData?.negotiatedPrice || 0,
+        startDate: jobData?.startDate || new Date().toISOString(),
+        estimatedCompletionDate: jobData?.estimatedCompletionDate || new Date().toISOString(),
+        
+        // Audit Results
+        contractHash: jobData?.contractHash || "",
+        findings,
+        vulnerabilities: selectedVulnerabilities,
+        auditNotes,
+        staticAnalysisReports: ["slither", "mythril"],
+        evidenceFiles: evidenceFiles.map((f) => f.name),
+        completionDate: new Date().toISOString(),
+        
+        // IPFS Data (will be set after upload)
+        ipfsHash: "",
+        evidenceFileHashes: []
+      }
 
-      // Submit audit results with NFT minting
-      setUploadProgress(50)
+      // Upload comprehensive evidence to IPFS (client-side)
+      setUploadProgress(20)
+      console.log("[Auditor Job] Starting client-side NFT minting process...")
+      
+      // Mint comprehensive Audit Result NFT using connected wallet (same pattern as upload page)
+      setUploadProgress(30)
+      const nftResult = await createAuditResultNFTClient(auditResultData, connectedAccount)
+
+      if (!nftResult.success) {
+        throw new Error(nftResult.error || "Failed to mint audit result NFT")
+      }
+
+      console.log("[Auditor Job] NFT minted successfully:", nftResult.nftMintResult)
+
+      // Save audit result to database (server-side)
+      setUploadProgress(70)
       const response = await fetch("/api/submit-audit-results", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -158,22 +473,38 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
           auditNotes,
           staticAnalysisReports: ["slither", "mythril"],
           evidenceFiles: evidenceFiles.map((f) => f.name),
-          contractHash: jobData.contractHash,
+          contractHash: jobData?.contractHash || "",
+          auditorWallet: connectedAccount.address,
+          // Include NFT minting results
+          nftResult: nftResult,
         }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to submit audit results")
+        throw new Error(data.error || "Failed to save audit results to database")
       }
 
-      console.log("[v0] Audit results submitted successfully:", data)
+      console.log("[Auditor Job] Audit results saved successfully:", data)
 
       // Set IPFS hash and NFT confirmation
-      setUploadProgress(80)
-      setIpfsHash(data.ipfsHash)
-      setNftConfirmation(data.nft)
+      setUploadProgress(90)
+      setIpfsHash(nftResult.nftMintResult?.metadataUri || "")
+      setNftConfirmation({
+        tokenId: nftResult.nftMintResult?.tokenId,
+        transactionHash: nftResult.nftMintResult?.transactionHash,
+        contractAddress: nftResult.nftContract?.address,
+        explorerUrl: nftResult.nftMintResult?.explorerUrl,
+        message: "Comprehensive Audit Result NFT minted successfully!",
+        auditDetails: {
+          projectName: jobData?.projectName,
+          auditorName: jobData?.auditorName,
+          acceptedPrice: jobData?.negotiatedPrice,
+          findingsCount: findings.length,
+          vulnerabilitiesCount: selectedVulnerabilities.filter((v: any) => v.checked).length,
+        }
+      })
 
       // Complete progress
       setUploadProgress(100)
@@ -184,11 +515,49 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
         window.location.href = "/dashboard"
       }, 3000)
     } catch (error: any) {
-      console.error("[v0] Error submitting audit results:", error)
+      console.error("[Auditor Job] Error submitting audit results:", error)
       alert(error.message || "Failed to submit audit results")
       setIsSubmitting(false)
       setUploadProgress(0)
     }
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary" />
+              <p className="text-muted-foreground">Loading audit details...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error || !jobData) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <AlertTriangle className="w-8 h-8 mx-auto mb-4 text-destructive" />
+              <h3 className="text-lg font-semibold mb-2">Error Loading Audit</h3>
+              <p className="text-muted-foreground mb-4">{error || "Audit not found"}</p>
+              <Button onClick={fetchAuditData} variant="outline">
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -199,7 +568,7 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Anonymous Contract Audit</h1>
+            <h1 className="text-3xl font-bold text-foreground mb-2">{jobData.projectName}</h1>
             <p className="text-muted-foreground">
               {jobData.contractType} • Hash: {jobData.contractHash.slice(0, 16)}...
             </p>
@@ -212,7 +581,7 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
             <Badge variant="outline">{jobData.auditPackage}</Badge>
             <Badge className="bg-success/20 text-success border-success/30">
               <Bot className="w-3 h-3 mr-1" />
-              AI Negotiated: ${jobData.negotiatedPrice}
+              Accepted: ${jobData.negotiatedPrice || jobData.originalPrice}
             </Badge>
           </div>
         </div>
@@ -224,12 +593,11 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
               <CardTitle>Audit Progress</CardTitle>
               <div className="flex items-center space-x-4">
                 <Badge variant="outline">
-                  {jobData.completedHours}/{jobData.estimatedHours}h
+                  {jobData.progress || 0}% Complete
                 </Badge>
-                <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/30">
-                  <Timer className="w-3 h-3 mr-1" />
-                  {jobData.timeRemaining}
-                </Badge>
+                {jobData.estimatedCompletionDate && (
+                  <CountdownTimer targetDate={jobData.estimatedCompletionDate} />
+                )}
               </div>
             </div>
           </CardHeader>
@@ -254,10 +622,10 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="code">Code Review</TabsTrigger>
+            {/*<TabsTrigger value="code">Code Review</TabsTrigger>*/}
             <TabsTrigger value="findings">Findings</TabsTrigger>
             <TabsTrigger value="vulnerabilities">Vulnerabilities</TabsTrigger>
-            <TabsTrigger value="tools">Analysis Tools</TabsTrigger>
+            {/*<TabsTrigger value="tools">Analysis Tools</TabsTrigger>*/}
             <TabsTrigger value="evidence">Evidence & ZKP</TabsTrigger>
           </TabsList>
 
@@ -302,10 +670,12 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                       </div>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Negotiated Price:</span>
+                      <span className="text-muted-foreground">Accepted Price:</span>
                       <div className="flex items-center space-x-2">
-                        <span className="text-muted-foreground line-through text-xs">${jobData.originalPrice}</span>
-                        <span className="font-medium text-success">${jobData.negotiatedPrice}</span>
+                        {jobData.originalPrice && (
+                          <span className="text-muted-foreground line-through text-xs">${jobData.originalPrice}</span>
+                        )}
+                        <span className="font-medium text-success">${jobData.negotiatedPrice || jobData.originalPrice}</span>
                       </div>
                     </div>
                   </div>
@@ -347,14 +717,14 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
               </Card>
             </div>
 
-            <Card>
+           {/*} <Card>
               <CardHeader>
                 <CardTitle>Anonymized Contract Files</CardTitle>
                 <CardDescription>Sanitized and obfuscated smart contract files for review</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {jobData.files.map((file, index) => (
+                  {(jobData.files || ['Contract_A.sol', 'Contract_B.sol', 'Contract_C.sol', 'Contract_D.sol']).map((file, index) => (
                     <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
                       <div className="flex items-center space-x-2">
                         <FileCode className="w-4 h-4 text-muted-foreground" />
@@ -377,10 +747,10 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                   ))}
                 </div>
               </CardContent>
-            </Card>
+            </Card>*/}
           </TabsContent>
 
-          <TabsContent value="code" className="space-y-6">
+          {/*<TabsContent value="code" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Code Review Workspace</CardTitle>
@@ -446,7 +816,7 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent>*/}
 
           <TabsContent value="findings" className="space-y-6">
             <Card>
@@ -456,33 +826,57 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {findings.map((finding) => (
-                    <div key={finding.id} className="border border-border rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <Badge
-                            className={
-                              finding.severity === "critical"
-                                ? "bg-destructive/20 text-destructive border-destructive/30"
-                                : finding.severity === "high"
-                                  ? "bg-orange-500/20 text-orange-500 border-orange-500/30"
-                                  : finding.severity === "medium"
-                                    ? "bg-warning/20 text-warning border-warning/30"
-                                    : "bg-muted/20 text-muted-foreground border-muted/30"
-                            }
-                          >
-                            {finding.severity}
-                          </Badge>
-                          <h3 className="font-semibold">{finding.title}</h3>
-                        </div>
-                        <Badge variant="outline">{finding.status}</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{finding.description}</p>
-                      <div className="text-xs text-muted-foreground">
-                        {finding.file}:{finding.line}
-                      </div>
+                  {findings.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <AlertTriangle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No findings added yet. Use the form below to add your first finding.</p>
                     </div>
-                  ))}
+                  ) : (
+                    findings.map((finding) => (
+                      <div key={finding.id} className="border border-border rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <Badge
+                              className={
+                                finding.severity === "critical"
+                                  ? "bg-destructive/20 text-destructive border-destructive/30"
+                                  : finding.severity === "high"
+                                    ? "bg-orange-500/20 text-orange-500 border-orange-500/30"
+                                    : finding.severity === "medium"
+                                      ? "bg-warning/20 text-warning border-warning/30"
+                                      : "bg-muted/20 text-muted-foreground border-muted/30"
+                              }
+                            >
+                              {finding.severity}
+                            </Badge>
+                            <h3 className="font-semibold">{finding.title}</h3>
+                          </div>
+                          <Badge variant="outline">{finding.finding_status || 'open'}</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">{finding.description}</p>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <div>
+                            {finding.file_name && (
+                              <span>{finding.file_name}</span>
+                            )}
+                            {finding.line_number && (
+                              <span>:{finding.line_number}</span>
+                            )}
+                          </div>
+                          <div>
+                            Added: {new Date(finding.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        {finding.finding_category && (
+                          <div className="mt-2">
+                            <Badge variant="outline" className="text-xs">
+                              {finding.finding_category}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -551,7 +945,19 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                       ))}
                     </select>
                   </div>
-                  <Button>Add Finding</Button>
+                  <Button 
+                    onClick={handleAddFinding}
+                    disabled={isAddingFinding || !newFinding.title || !newFinding.description}
+                  >
+                    {isAddingFinding ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Adding Finding...
+                      </>
+                    ) : (
+                      "Add Finding"
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -747,8 +1153,64 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                     </div>
                   </div>
 
+                  {/* Wallet Connection Section */}
+                  {!connectedAccount && !jobData?.auditorWallet && (
+                    <div className="bg-warning/10 border border-warning/30 rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-2 text-warning font-semibold mb-3">
+                        <AlertTriangle className="w-5 h-5" />
+                        Wallet Connection Required
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        You need to connect your wallet to submit audit results and mint the comprehensive NFT.
+                      </p>
+                      <div className="flex gap-2">
+                        <ConnectButton client={client} />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            console.log("[Debug] Current account state:", {
+                              account: account,
+                              address: account?.address,
+                              type: typeof account,
+                              keys: account ? Object.keys(account) : "No account"
+                            })
+                            alert(`Debug Info:\nAccount: ${account ? 'Exists' : 'Null'}\nAddress: ${account?.address || 'None'}\nType: ${typeof account}`)
+                          }}
+                        >
+                          Debug Wallet
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Enhanced Wallet Debug Component */}
+                  <WalletDebug />
+
+                  {/* Connected Wallet Info */}
+                  {(connectedAccount || jobData?.auditorWallet) && (
+                    <div className="bg-success/10 border border-success/30 rounded-lg p-4 mb-4">
+                      <div className="flex items-center gap-2 text-success font-semibold mb-2">
+                        <CheckCircle className="w-5 h-5" />
+                        {connectedAccount ? "Wallet Connected" : "Auditor Wallet Available"}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {connectedAccount ? "Connected: " : "Auditor: "}
+                        <span className="font-mono">{connectedAccount?.address || jobData?.auditorWallet}</span>
+                      </p>
+                      {!connectedAccount && jobData?.auditorWallet && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Using auditor wallet from job data. For best experience, connect your wallet.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex space-x-2">
-                    <Button onClick={() => setIsSubmitDialogOpen(true)}>
+                    <Button 
+                      onClick={() => setIsSubmitDialogOpen(true)}
+                      disabled={!connectedAccount && !jobData?.auditorWallet}
+                    >
                       <Send className="w-4 h-4 mr-1" />
                       Submit Audit Results
                     </Button>
@@ -777,9 +1239,9 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
       <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Submit Audit Results & Mint Result NFT</DialogTitle>
+            <DialogTitle>Submit Audit Results & Mint Comprehensive NFT</DialogTitle>
             <DialogDescription>
-              Your evidence will be uploaded to IPFS and an Audit Result NFT will be minted on ApeChain.
+              Your complete audit evidence will be uploaded to IPFS and a comprehensive Audit Result NFT will be minted on ApeChain with full audit details.
             </DialogDescription>
           </DialogHeader>
 
@@ -810,17 +1272,18 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                 <h4 className="font-semibold mb-2 flex items-center gap-2">
                   <Shield className="w-5 h-5" />
-                  Audit Result NFT
+                  Comprehensive Audit Result NFT
                 </h4>
                 <p className="text-sm text-muted-foreground mb-2">
-                  Upon submission, an ERC-721 Audit Result NFT will be minted containing:
+                  Upon submission, a comprehensive ERC-721 Audit Result NFT will be minted containing:
                 </p>
                 <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                  <li>• Reference to Audit Owner NFT #{params.id}</li>
-                  <li>• IPFS hash of all evidence and findings</li>
-                  <li>• Vulnerability count and findings summary</li>
-                  <li>• Completion timestamp</li>
-                  <li>• Immutable proof on ApeChain blockchain</li>
+                  <li>• Complete audit request details and project information</li>
+                  <li>• Full auditor information and acceptance details</li>
+                  <li>• Comprehensive audit findings and vulnerability assessments</li>
+                  <li>• All evidence files and analysis reports on IPFS</li>
+                  <li>• Severity breakdown and completion metrics</li>
+                  <li>• Immutable proof of entire audit process on ApeChain</li>
                 </ul>
               </div>
 
@@ -833,11 +1296,11 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                   <Progress value={uploadProgress} />
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {uploadProgress < 20 && "Preparing evidence package..."}
-                    {uploadProgress >= 20 && uploadProgress < 40 && "Uploading to IPFS..."}
-                    {uploadProgress >= 40 && uploadProgress < 60 && "Minting Audit Result NFT..."}
-                    {uploadProgress >= 60 && uploadProgress < 80 && "Anchoring on ApeChain..."}
-                    {uploadProgress >= 80 && "Finalizing submission..."}
+                    {uploadProgress < 20 && "Preparing comprehensive evidence package..."}
+                    {uploadProgress >= 20 && uploadProgress < 40 && "Uploading complete audit data to IPFS..."}
+                    {uploadProgress >= 40 && uploadProgress < 60 && "Minting comprehensive Audit Result NFT..."}
+                    {uploadProgress >= 60 && uploadProgress < 80 && "Anchoring complete audit proof on ApeChain..."}
+                    {uploadProgress >= 80 && "Finalizing comprehensive submission..."}
                   </div>
                 </div>
               )}
@@ -855,7 +1318,7 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                   ) : (
                     <>
                       <Send className="w-4 h-4 mr-2" />
-                      Submit & Mint NFT
+                      Submit & Mint Comprehensive NFT
                     </>
                   )}
                 </Button>
@@ -866,12 +1329,18 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
               <div className="bg-success/10 border border-success/30 rounded-lg p-4">
                 <div className="flex items-center gap-2 text-success font-semibold mb-3">
                   <CheckCircle className="w-5 h-5" />
-                  Audit Result NFT Minted Successfully!
+                  Comprehensive Audit Result NFT Minted Successfully!
                 </div>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Token ID:</span>{" "}
-                    <span className="font-mono font-semibold">#{nftConfirmation.tokenId}</span>
+                <div className="space-y-3 text-sm">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <span className="text-muted-foreground">Token ID:</span>{" "}
+                      <span className="font-mono font-semibold">#{nftConfirmation.tokenId}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Contract:</span>{" "}
+                      <span className="font-mono text-xs">{nftConfirmation.contractAddress}</span>
+                    </div>
                   </div>
                   <div>
                     <span className="text-muted-foreground">IPFS Hash:</span>{" "}
@@ -889,14 +1358,36 @@ export default function AuditorJobPage({ params }: { params: { id: string } }) {
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
+                  {nftConfirmation.auditDetails && (
+                    <div className="border-t pt-3 mt-3">
+                      <h4 className="font-semibold mb-2">Audit Summary</h4>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-muted-foreground">Project:</span>{" "}
+                          <span className="font-semibold">{nftConfirmation.auditDetails.projectName}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Findings:</span>{" "}
+                          <span className="font-semibold">{nftConfirmation.auditDetails.findingsCount}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Vulnerabilities:</span>{" "}
+                          <span className="font-semibold">{nftConfirmation.auditDetails.vulnerabilitiesCount}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Price:</span>{" "}
+                          <span className="font-semibold">${nftConfirmation.auditDetails.acceptedPrice}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="bg-muted/50 rounded-lg p-4">
                 <p className="text-sm text-muted-foreground">
                   <CheckCircle className="w-4 h-4 inline mr-1 text-success" />
-                  Your audit results have been uploaded to IPFS and the Result NFT has been linked to Audit Owner NFT #
-                  {params.id}. Redirecting to dashboard...
+                  Your comprehensive audit results have been uploaded to IPFS and a complete Audit Result NFT has been minted with full audit details. Redirecting to dashboard...
                 </p>
               </div>
             </div>

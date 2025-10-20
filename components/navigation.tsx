@@ -14,12 +14,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Shield, Settings, Bell, ChevronDown, Menu, X, Moon, Sun, LogOut, User, Wallet } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
+import { useActiveAccount, useDisconnect } from "thirdweb/react"
 
 export function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const { user, logout, isAuthenticated } = useAuth()
   const router = useRouter()
+  const account = useActiveAccount()
+  const { disconnect } = useDisconnect()
 
   useEffect(() => {
     // Check for saved theme preference or default to light mode
@@ -32,6 +35,21 @@ export function Navigation() {
     }
   }, [])
 
+  // Test auth context on mount
+  useEffect(() => {
+    console.log("🔧 Navigation mounted - Auth Debug:")
+    console.log("🔧 User:", user)
+    console.log("🔧 Is authenticated:", isAuthenticated)
+    console.log("🔧 Logout function type:", typeof logout)
+    
+    // Test if we can call logout directly
+    if (typeof logout === 'function') {
+      console.log("✅ Logout function is available and callable")
+    } else {
+      console.error("❌ Logout function is not available!")
+    }
+  }, [user, isAuthenticated, logout])
+
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode)
     if (!isDarkMode) {
@@ -43,9 +61,30 @@ export function Navigation() {
     }
   }
 
-  const handleLogout = () => {
-    logout()
-    router.push("/")
+  const handleLogout = async () => {
+    console.log("🚪 Logout button clicked!")
+    console.log("🔍 Current user:", user)
+    console.log("🔍 Is authenticated:", isAuthenticated)
+    console.log("🔍 localStorage before:", localStorage.getItem("proofchain_user"))
+    
+    try {
+      console.log("🧹 Clearing auth context...")
+      // Clear auth context first
+      logout()
+      console.log("✅ Auth context cleared")
+      console.log("🔍 localStorage after:", localStorage.getItem("proofchain_user"))
+      
+      console.log("🏠 Redirecting to home...")
+      // Redirect to home
+      router.push("/")
+      console.log("✅ Redirected to home")
+    } catch (error) {
+      console.error("❌ Error during logout:", error)
+      console.error("❌ Error stack:", error instanceof Error ? error.stack : 'No stack trace')
+      // Still clear auth context even if something fails
+      logout()
+      router.push("/")
+    }
   }
 
   const formatAddress = (address: string) => {
@@ -80,9 +119,9 @@ export function Navigation() {
             <Link href="/verification" className="text-muted-foreground hover:text-foreground transition-colors">
               Verification
             </Link>
-            <Link href="/blockchain" className="text-muted-foreground hover:text-foreground transition-colors">
+            {/*<Link href="/blockchain" className="text-muted-foreground hover:text-foreground transition-colors">
               Blockchain
-            </Link>
+            </Link>*/}
             <Link href="/admin" className="text-muted-foreground hover:text-foreground transition-colors">
               Admin
             </Link>
@@ -96,17 +135,37 @@ export function Navigation() {
             <Button variant="ghost" size="sm" onClick={toggleDarkMode} title={isDarkMode ? "Light mode" : "Dark mode"}>
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            <Button variant="ghost" size="sm">
+            {/*<Button variant="ghost" size="sm">
               <Bell className="w-4 h-4" />
             </Button>
             <Button variant="ghost" size="sm">
               <Settings className="w-4 h-4" />
-            </Button>
+            </Button>*/}
 
             {isAuthenticated && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
+                {/* Test logout button */}
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    console.log("🧪 DIRECT LOGOUT TEST - Button clicked!")
+                    handleLogout()
+                  }}
+                  className="text-xs bg-red-50 hover:bg-red-100 text-red-600 border-red-200"
+                >
+                  🚪 Logout
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="flex items-center space-x-2"
+                      onClick={() => {
+                        console.log("🖱️ Dropdown trigger clicked!")
+                      }}
+                    >
                     <div className="flex items-center space-x-2">
                       <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
                         {user.authMethod === "email" ? (
@@ -129,8 +188,15 @@ export function Navigation() {
                     <ChevronDown className="w-4 h-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
+                <DropdownMenuContent align="end" className="w-64 z-50">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => {
+                    console.log("🧪 TEST ITEM CLICKED!")
+                    alert("Test item clicked!")
+                  }}>
+                    🧪 Test Item
+                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   {user.email && (
                     <DropdownMenuItem disabled className="flex flex-col items-start">
@@ -191,16 +257,26 @@ export function Navigation() {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push("/dashboard")}>
+                  <DropdownMenuItem onClick={() => {
+                    console.log("🖱️ Settings button clicked - testing router")
+                    router.push("/dashboard")
+                  }}>
                     <Settings className="w-4 h-4 mr-2" />
                     Settings
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout}>
+                  <DropdownMenuItem 
+                    onClick={(e) => {
+                      console.log("🖱️ Logout menu item clicked!", e)
+                      handleLogout()
+                    }}
+                    className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground focus:bg-destructive focus:text-destructive-foreground"
+                  >
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
-              </DropdownMenu>
+                </DropdownMenu>
+              </div>
             ) : (
               <Button onClick={() => router.push("/login")} size="sm">
                 Sign In
@@ -274,7 +350,7 @@ export function Navigation() {
               >
                 Verification
               </Link>
-              <Link
+              {/*<Link
                 href="/blockchain"
                 className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
               >
@@ -282,7 +358,7 @@ export function Navigation() {
               </Link>
               <Link href="/admin" className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1">
                 Admin
-              </Link>
+              </Link>*/}
               <Link href="/help" className="text-muted-foreground hover:text-foreground transition-colors px-2 py-1">
                 Help
               </Link>

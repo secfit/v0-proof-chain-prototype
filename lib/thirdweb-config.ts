@@ -24,9 +24,24 @@ export const apechainTestnet = defineChain({
 });
 
 // Create the client (use clientId for public/client or secretKey for server)
+const clientId = process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || "30f238d7e42614f3c0fefcc95616ac9c"
+
+console.log("[ThirdwebConfig] Environment check:", {
+  NODE_ENV: process.env.NODE_ENV,
+  NEXT_PUBLIC_THIRDWEB_CLIENT_ID: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID,
+  clientId: clientId,
+  isServer: typeof window === 'undefined'
+})
+
 export const client = createThirdwebClient({ 
-  clientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID || "30f238d7e42614f3c0fefcc95616ac9c"
+  clientId: clientId
 });
+
+console.log("[ThirdwebConfig] Client created:", {
+  client: client,
+  clientId: client.clientId,
+  type: typeof client
+})
 
 // Account configuration for Node.js backends
 export const account = privateKeyToAccount({

@@ -209,16 +209,16 @@ export default function HelpPage() {
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                       <p className="text-muted-foreground">
-                        <strong>Minted when:</strong> Auditor accepts audit job
+                        <strong>Current behavior:</strong> No minting on acceptance; status changes to "In Progress"
                       </p>
                       <p className="text-muted-foreground">
-                        <strong>Contains:</strong> Auditor details, accepted price, timeline, reference to Request NFT
+                        <strong>Planned contents:</strong> Auditor details, accepted price, timeline, ref to Request NFT
                       </p>
                       <p className="text-muted-foreground">
-                        <strong>Status:</strong> Accepted - Proves audit ownership
+                        <strong>Status:</strong> Planned (not minted in current release)
                       </p>
                       <Badge variant="outline" className="mt-2">
-                        ERC-721 on ApeChain
+                        Planned ERC-721 on ApeChain
                       </Badge>
                     </CardContent>
                   </Card>
@@ -232,10 +232,10 @@ export default function HelpPage() {
                     </CardHeader>
                     <CardContent className="space-y-2 text-sm">
                       <p className="text-muted-foreground">
-                        <strong>Minted when:</strong> Auditor submits findings
+                        <strong>Minted when:</strong> Auditor submits audit results (client-side wallet minting)
                       </p>
                       <p className="text-muted-foreground">
-                        <strong>Contains:</strong> IPFS hash, findings count, vulnerabilities, reference to Owner NFT
+                        <strong>Contains:</strong> IPFS hash (metadata), findings summary, vulnerabilities, links
                       </p>
                       <p className="text-muted-foreground">
                         <strong>Status:</strong> Completed - Immutable audit proof
@@ -360,7 +360,7 @@ export default function HelpPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Blockchain:</strong> ApeChain, Thirdweb SDK, Ethers.js</span>
+                        <span><strong>Blockchain:</strong> ApeChain testnet, Thirdweb SDK (client), Ethers.js</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
@@ -368,7 +368,7 @@ export default function HelpPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>Storage:</strong> IPFS for decentralized file storage</span>
+                        <span><strong>Storage:</strong> IPFS via Thirdweb storage (no Pinata)</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
@@ -441,11 +441,10 @@ export default function HelpPage() {
                   <div>
                     <h4 className="font-semibold text-sm mb-1">ApeChain Integration</h4>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• AuditRequestNFT (ERC-721)</li>
-                      <li>• ProofChainToken (ERC-20)</li>
-                      <li>• Immutable audit records</li>
-                      <li>• Cryptographic verification</li>
-                      <li>• Thirdweb SDK integration</li>
+                      <li>• Audit Result NFT (ERC-721) minted on submission</li>
+                      <li>• Immutable audit records on ApeChain testnet</li>
+                      <li>• Cryptographic verification and explorer links</li>
+                      <li>• Thirdweb SDK integration (client-side mint)</li>
                     </ul>
                   </div>
                 </CardContent>
@@ -474,10 +473,10 @@ export default function HelpPage() {
             </div>
 
             <Card className="bg-gradient-to-r from-accent/10 to-success/10 border-accent/20">
-              <CardHeader>
+                  <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-2xl">
                   <Workflow className="w-8 h-8 text-accent" />
-                  API Architecture
+                  API Architecture & Key Endpoints
                 </CardTitle>
                 <CardDescription className="text-lg">
                   RESTful API design with comprehensive service layer integration
@@ -493,7 +492,7 @@ export default function HelpPage() {
                     <ul className="space-y-2 text-muted-foreground">
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>POST /api/submit-audit:</strong> Create new audit request</span>
+                        <span><strong>POST /api/submit-audit:</strong> Create new audit request (Request NFT client-side)</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
@@ -505,11 +504,19 @@ export default function HelpPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>POST /api/accept-audit:</strong> Accept audit request</span>
+                        <span><strong>POST /api/accept-audit:</strong> Accept audit request (no NFT mint on accept)</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>GET /api/contracts:</strong> Get smart contract data</span>
+                        <span><strong>POST /api/submit-audit-results:</strong> Save results + client-minted NFT data</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>GET /api/audit-results/[id]:</strong> Latest result by audit_request_id</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
+                        <span><strong>POST /api/verify-audit:</strong> Verify by audit_request_id (uses ipfs_hash)</span>
                       </li>
                     </ul>
                   </div>
@@ -533,7 +540,7 @@ export default function HelpPage() {
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-success mt-0.5 flex-shrink-0" />
-                        <span><strong>IPFSService:</strong> Decentralized storage</span>
+                        <span><strong>StorageService:</strong> Thirdweb IPFS storage (no Pinata)</span>
                       </li>
                     </ul>
                   </div>
@@ -665,7 +672,7 @@ export default function HelpPage() {
                             <h4 className="font-semibold mb-1">Track Progress</h4>
                             <p className="text-xs text-muted-foreground">Monitor audit status through dashboard</p>
                             <Badge variant="outline" className="mt-2 text-xs">
-                              Owner NFT Created
+                              Status: In Progress
                             </Badge>
                           </div>
                         </CardContent>
@@ -749,7 +756,7 @@ export default function HelpPage() {
                             <h4 className="font-semibold mb-1">Submit Proof</h4>
                             <p className="text-xs text-muted-foreground">Upload to IPFS and mint Result NFT</p>
                             <Badge variant="outline" className="mt-2 text-xs">
-                              Result NFT Minted
+                              Client-side Mint
                             </Badge>
                           </div>
                         </CardContent>
@@ -785,7 +792,7 @@ export default function HelpPage() {
                             </div>
                             <h4 className="font-semibold mb-1">IPFS Storage</h4>
                             <p className="text-xs text-muted-foreground">
-                              Decentralized evidence and audit data storage
+                              Decentralized evidence and audit data storage (ipfs_hash used for verification fetch)
                             </p>
                           </div>
                         </CardContent>
